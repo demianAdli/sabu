@@ -1,18 +1,19 @@
 import json
-import os
 import logging
+import os
 
-from flask import jsonify, current_app
+from flask import current_app, jsonify, request
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from marshmallow import ValidationError
 from werkzeug.exceptions import HTTPException
 
+from ..application import EmissionsApplicationService
 from ..schemas.schemas import (
     GeoJSONUploadSchema,
     LCAInputDataSchema,
 )
-from ..lca_carbon_workflow import LCACarbonWorkflow
+from ..reporting import EmissionsReportExporter
 
 logger = logging.getLogger(__name__)
 DEV_MODE = os.getenv('LOG_ENV', 'dev') == 'dev'
@@ -31,17 +32,47 @@ def _run_emissions_workflow(
     request_received_log,
     request_failed_log,
 ):
+    export_format = (request.args.get('export') or '').strip().lower()
+    if export_format and export_format != 'csv':
+        abort(400, message="Unsupported export format. Supported values: csv")
+
     logger.info(request_received_log)
     try:
-        emissions_data = LCACarbonWorkflow(
-            request_city,
-            'nrcan_archetypes.json',
-            'nrcan_constructions_cap_3.json'
-        ).export_emissions()
+        computation_result = (
+            EmissionsApplicationService.get_or_compute_emissions(
+                request_city
+            )
+        )
+        emissions_data = computation_result.emissions_data
         logger.info(
             "emissions_request_succeeded",
-            extra={'buildings': len(emissions_data)},
+            extra={
+                'buildings': len(emissions_data),
+                'cache_hit': computation_result.cache_hit,
+                'request_hash': computation_result.request_hash[:12],
+            },
         )
+        if export_format == 'csv':
+            csv_export = EmissionsApplicationService.get_or_build_csv_report(
+                request_city,
+                computation_result,
+            )
+            logger.info(
+                "emissions_report_export_succeeded",
+                extra={
+                    'format': 'csv',
+                    'buildings': len(emissions_data),
+                    'csv_cache_hit': csv_export['cache_hit'],
+                    'request_hash': computation_result.request_hash[:12],
+                },
+            )
+            return (
+                EmissionsReportExporter.to_csv_download_response_with_filename(
+                    csv_export['csv_text'],
+                    csv_export['filename'],
+                ),
+                200,
+            )
         return jsonify(emissions_data), 201
 
     except HTTPException:
@@ -52,7 +83,7 @@ def _run_emissions_workflow(
         logger.exception(request_failed_log)
         public_msg = (
             str(e) if (DEV_MODE or current_app.debug)
-            else "Failed to compute emissions"
+            else 'Failed to compute emissions'
         )
         abort(500, message=public_msg)
 
