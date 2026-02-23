@@ -14,6 +14,14 @@ paths:
       summary: Compute building emissions from GeoJSON JSON payload
       operationId: createBuildingEmissions
       tags: [Emissions]
+      parameters:
+        - in: query
+          name: export
+          required: false
+          description: Optional export format. Use `csv` to download a CSV report instead of JSON.
+          schema:
+            type: string
+            enum: [csv]
       requestBody:
         required: true
         content:
@@ -21,6 +29,19 @@ paths:
             schema:
               $ref: '#/components/schemas/LCAInputData'
       responses:
+        '200':
+          description: CSV report generated successfully (when `export=csv`)
+          content:
+            text/csv:
+              schema:
+                type: string
+              examples:
+                csvReport:
+                  summary: Emissions CSV report
+                  value: |
+                    building_index,feature_id,name,address,function,height,year_of_construction,opening_embodied_emissions,envelope_embodied_emissions,component_embodied_emissions,opening_end_of_life_emissions,envelope_end_of_life_emissions,component_end_of_life_emissions,total_embodied_emissions,total_end_of_life_emissions,total_lca_emissions
+                    1,1,Building 1,123 Test St,Residential,12.5,1995,1.0,2.0,3.0,4.0,5.0,6.0,6.0,15.0,21.0
+                    ,TOTAL,,,,,,,1.0,2.0,3.0,4.0,5.0,6.0,6.0,15.0,21.0
         '201':
           description: Emissions calculated successfully
           content:
@@ -52,6 +73,14 @@ paths:
       summary: Compute building emissions from uploaded GeoJSON file
       operationId: uploadBuildingEmissions
       tags: [Emissions]
+      parameters:
+        - in: query
+          name: export
+          required: false
+          description: Optional export format. Use `csv` to download a CSV report instead of JSON.
+          schema:
+            type: string
+            enum: [csv]
       requestBody:
         required: true
         content:
@@ -65,6 +94,12 @@ paths:
                   format: binary
                   description: GeoJSON file containing a FeatureCollection of building footprints and properties
       responses:
+        '200':
+          description: CSV report generated successfully (when `export=csv`)
+          content:
+            text/csv:
+              schema:
+                type: string
         '201':
           description: Emissions calculated successfully
           content:
