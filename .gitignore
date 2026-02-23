@@ -79,5 +79,12 @@ hub/
 # Others
 symbology-style.db
 
+# Runtime/cache artifacts (generated)
+.runtime/
+artifacts/
+data/
+services/jug_lca_buildings/artifacts/
+services/jug_lca_buildings/data/
+
 # 
 # !input_files/.gitkeep
