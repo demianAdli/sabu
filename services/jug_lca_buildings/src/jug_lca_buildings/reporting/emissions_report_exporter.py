@@ -137,6 +137,10 @@ class EmissionsReportExporter:
         csv_text = cls.build_csv_text(request_city, emissions_data)
         stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
         filename = f'jug_lca_buildings_emissions_report_{stamp}.csv'
+        return cls.to_csv_download_response_with_filename(csv_text, filename)
+
+    @classmethod
+    def to_csv_download_response_with_filename(cls, csv_text, filename):
         return Response(
             csv_text,
             mimetype='text/csv',
