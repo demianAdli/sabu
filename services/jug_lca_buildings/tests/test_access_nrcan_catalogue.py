@@ -7,7 +7,7 @@ from src.jug_lca_buildings.life_cycle_assessment.access_nrcan_catalogue\
 
 class TestAccessNRCANCatalog(TestCase):
     def setUp(self):
-        self.path = Path(__file__).parent.parent / 'src' / 'jug_lca_buildings' / 'input_files'
+        self.path = Path(__file__).parent.parent / 'src' / 'jug_lca_buildings' / 'data'
         self.catalog = AccessNrcanCatalog(self.path)
 
     def test_hub_to_nrcan_function(self):

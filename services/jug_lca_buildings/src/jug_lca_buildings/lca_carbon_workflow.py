@@ -67,18 +67,18 @@ class LCACarbonWorkflow:
     city_input = InputGeoJsonContent(city_path)
     city_candidate = city_input.content
     p = Path(city_candidate)
-    used_input_files_fallback = False
+    used_package_data_fallback = False
     if not p.is_absolute() and not p.exists():
-      p = Path(__file__).parent / 'input_files' / p
-      used_input_files_fallback = True
+      p = Path(__file__).parent / 'data' / p
+      used_package_data_fallback = True
     try:
       self.file_path = p.resolve()
     except OSError:
       self.file_path = p
     if city_input.is_temp_file:
       logger.info('City input resolved to a temporary GeoJSON file.')
-    elif used_input_files_fallback:
-      logger.info('City input resolved under package input_files.')
+    elif used_package_data_fallback:
+      logger.info('City input resolved under package data.')
     elif self.file_path.exists():
       logger.info('City input resolved to an existing path.')
     else:
@@ -89,7 +89,7 @@ class LCACarbonWorkflow:
         f'City input file not found after normalization: {self.file_path}'
       )
 
-    self.catalogs_path = Path(__file__).parent / 'input_files'
+    self.catalogs_path = Path(__file__).parent / 'data'
     self.archetypes_catalog_file_name = archetypes_catalog_file_name
     self.constructions_catalog_file = constructions_catalog_file
     self.nrcan_catalogs = AccessNrcanCatalog(
