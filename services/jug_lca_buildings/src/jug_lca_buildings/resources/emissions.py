@@ -39,7 +39,7 @@ def _run_emissions_workflow(
     logger.info(request_received_log)
     try:
         computation_result = (
-            EmissionsApplicationService.get_or_compute_emissions(
+            EmissionsApplicationService.compute_emissions(
                 request_city
             )
         )
@@ -53,7 +53,7 @@ def _run_emissions_workflow(
             },
         )
         if export_format == 'csv':
-            csv_export = EmissionsApplicationService.get_or_build_csv_report(
+            csv_export = EmissionsApplicationService.build_csv_report(
                 request_city,
                 computation_result,
             )
