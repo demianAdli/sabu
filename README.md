@@ -36,7 +36,7 @@ Unlike services, they do not communicate via APIs and are not deployed independe
 - **`jugs_chassis`**  
   A foundational library offering shared infrastructure modules used across services (jugs), such as common utilities, conventions, and cross-cutting concerns.
 
-- **`city_gis_oo`**  
+- **`citygisoo`**  
   A shared library that simplifies the development of geospatial data-cleaning pipelines.  
   It provides object-oriented abstractions over GIS operations and serves as the underlying engine for `jug_gis_cities`.
 
