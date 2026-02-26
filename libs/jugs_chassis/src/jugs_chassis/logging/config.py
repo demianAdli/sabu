@@ -114,6 +114,16 @@ def apply_env_overrides(cfg: dict[str, Any]) -> dict[str, Any]:
     return cfg
 
 
+def _env_int(name: str) -> int | None:
+    raw = os.getenv(name)
+    if raw is None:
+        return None
+    try:
+        return int(raw)
+    except ValueError:
+        return None
+
+
 def prepare_file_handler(cfg: dict[str, Any]) -> dict[str, Any]:
     handlers = cfg.get('handlers', {})
     fh = handlers.get('file')
@@ -125,6 +135,11 @@ def prepare_file_handler(cfg: dict[str, Any]) -> dict[str, Any]:
     if not filename:
         return cfg
 
+    env_filename = os.getenv('LOG_FILE_NAME')
+    if env_filename:
+        filename = env_filename
+        fh['filename'] = filename
+
     base = Path(os.getenv('LOG_DIR_BASE', Path.cwd()))
     file_path = Path(filename)
     if not file_path.is_absolute():
@@ -135,6 +150,18 @@ def prepare_file_handler(cfg: dict[str, Any]) -> dict[str, Any]:
     fh['filename'] = str(file_path)
     fh.setdefault('encoding', 'utf-8')
     fh.setdefault('mode', 'a')
+
+    file_level = os.getenv('LOG_FILE_LEVEL')
+    if file_level:
+        fh['level'] = file_level
+
+    max_bytes = _env_int('LOG_FILE_MAX_BYTES')
+    if max_bytes is not None and max_bytes > 0:
+        fh['maxBytes'] = max_bytes
+
+    backup_count = _env_int('LOG_FILE_BACKUP_COUNT')
+    if backup_count is not None and backup_count >= 0:
+        fh['backupCount'] = backup_count
 
     return cfg
 
