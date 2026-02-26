@@ -1,4 +1,5 @@
--e libs/jug_chassis
+-e libs/jugs_chassis
+-e libs/citygisoo
 Flask==3.1.1
 flask-smorest==0.46.1
 werkzeug==3.1.3
