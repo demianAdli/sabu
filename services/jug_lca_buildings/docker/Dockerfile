@@ -10,7 +10,7 @@ WORKDIR /app
 COPY services/jug_lca_buildings /app/services/jug_lca_buildings
 
 RUN python -m pip install --upgrade pip \
-    && python -m pip install jugs-chassis==0.1.1 \
+    && python -m pip install jugs-chassis==0.1.2 \
     && python -m pip install -e /app/services/jug_lca_buildings \
     && python -m pip install gunicorn
 
