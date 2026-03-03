@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "jug_ee"
+name = "jug_lca_buildings"
 version = "0.1.0"
 description = "Embodied and end-of-life estimator service."
 authors = [
@@ -16,5 +16,5 @@ dependencies = [
   "cerc-hub==0.2.0.8",
   "flask==3.1.1",
   "flask-smorest==0.46.1",
-  "jugs-chassis==0.1.1",
+  "jugs-chassis==0.1.2",
 ]
