@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.3] - 2026-02-27
+
+### To change
+
+- Local time for logs with ts
+
 ## [0.1.2] - 2026-02-27
 
 ### Changed
