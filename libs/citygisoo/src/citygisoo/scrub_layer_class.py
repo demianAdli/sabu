@@ -14,7 +14,7 @@ from qgis.core import QgsApplication, QgsField, QgsProject, \
 from qgis.PyQt.QtCore import QVariant
 from qgis.analysis import QgsNativeAlgorithms
 
-from basic_functions import create_folders, find_shp_files
+from .basic_functions import create_folders, find_shp_files
 
 
 class ScrubLayer:
