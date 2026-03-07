@@ -4,7 +4,7 @@ build-backend = 'setuptools.build_meta'
 
 [project]
 name = 'citygisoo'
-version = '0.1.0'
+version = '0.1.1'
 description = 'PyQGIS utilities and cleaning workflows for CityGISOO'
 readme = 'README.md'
 requires-python = '>=3.10'
