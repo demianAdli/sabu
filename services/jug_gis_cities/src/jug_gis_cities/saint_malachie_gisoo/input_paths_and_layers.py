@@ -25,7 +25,7 @@ qgis_path = 'C:/Program Files/QGIS 3.34.1/apps/qgis'
 
 # Gathering input data layers paths
 input_paths = {
-  'CERC Boundary':
+  'ROLE 2025':
   'C:/Users/a_adli/PycharmProjects/mtl_gis_oo/input_data/'
   'cerc_district_111/layer_111.shp'
 }
