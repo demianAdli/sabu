@@ -1,5 +1,5 @@
 """
-Municipality: Saint-Malchie
+Municipality: Saint-Malachie
 input_paths_and_layers module
 Project Developer: Alireza Adli 
 alireza.adli@mail.concordia.ca
