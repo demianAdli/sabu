@@ -1,7 +1,10 @@
 """
 handle_mtl_ds_workflow module
 The workflow of cleaning and updating the Montreal Buildings dataset.
-Project Developer: Alireza Adli alireza.adli@mail.concordia.ca
+Project Developer: Alireza Adli 
+alireza.adli@mail.concordia.ca
+alireza.adli4@gmail.com
+www.demianadli.com
 """
 
 from scrub_layer_class import ScrubLayer

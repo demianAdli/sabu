@@ -6,7 +6,10 @@ which includes our CERC office.
 The district 111 is a name made in a software project refering
 to a municipality (name will be added later)
 In Code comments I refer to this district as CERC.
-Project Developer: Alireza Adli alireza.adli@mail.concordia.ca
+Project Developer: Alireza Adli 
+alireza.adli@mail.concordia.ca
+alireza.adli4@gmail.com
+www.demianadli.com
 """
 
 from citygisoo.scrub_layer_class import ScrubLayer

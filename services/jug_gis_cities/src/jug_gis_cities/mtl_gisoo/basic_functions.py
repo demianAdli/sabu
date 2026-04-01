@@ -2,7 +2,10 @@
 basic_functions module
 A number of functionalities that help the project
 but cannot be a part of the PyQGIS tool.
-Project Developer: Alireza Adli alireza.adli@concordia.ca
+Project Developer: Alireza Adli 
+alireza.adli@mail.concordia.ca
+alireza.adli4@gmail.com
+www.demianadli.com
 """
 
 import os

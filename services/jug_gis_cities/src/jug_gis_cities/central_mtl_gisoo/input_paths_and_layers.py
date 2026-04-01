@@ -1,6 +1,9 @@
 """
 input_paths_and_layers module
-Project Developer: Alireza Adli alireza.adli@concordia.ca
+Project Developer: Alireza Adli 
+alireza.adli@mail.concordia.ca
+alireza.adli4@gmail.com
+www.demianadli.com
 """
 import os
 
