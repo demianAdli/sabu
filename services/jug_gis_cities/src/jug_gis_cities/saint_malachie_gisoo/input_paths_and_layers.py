@@ -39,14 +39,12 @@ input_paths = {
 
 # Defining a directory for all the output data layers
 output_paths_dir = \
-  'C:/Users/a_adli/PycharmProjects/saint_claude/' \
-  'output_data'
+  'D:/GIS/saint_malachie_gisoo_data/output_data'
 
 # Preparing a bedding for output data layers paths
 output_paths = {
-  'Fixed NRCan': '',
-  'NRCan CERC Fixed': '',
-  'Fixed GeoIndex': '',
+  'nrcan_fixed': '',
+  'geoindex_fixed': '',
   'Clipped Fixed GeoIndex': '',
   'CERC Property Assessment': '',
   'Splitted CERC NRCans': '',
