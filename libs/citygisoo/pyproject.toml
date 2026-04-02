@@ -7,7 +7,7 @@ name = 'citygisoo'
 version = '0.1.1'
 description = 'PyQGIS utilities and cleaning workflows for CityGISOO'
 readme = 'README.md'
-requires-python = '>=3.10'
+requires-python = '>=3.9'
 dependencies = []
 license = { file = 'LICENSE' }
 authors = [{ name = 'Alireza Adli' }]
