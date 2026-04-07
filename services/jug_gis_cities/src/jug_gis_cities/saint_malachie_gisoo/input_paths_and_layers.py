@@ -33,8 +33,11 @@ input_paths = {
   'D:/GIS/saint_malachie_gisoo_data/input_data/'
   'saint_malachie_auto_with_heights/saint_malachie_auto_with_heights.gpkg',
   'qc_geoindex':
-  'D:/GIS/saint_malachie_gisoo_data/input_data/saint_claude_mahm_usage_2025/'
-  'mamh_usage_predo_2025_s_poly.shp'
+  'D:/GIS/saint_malachie_gisoo_data/input_data/saint_malachie_mahm_usage_2025/'
+  'mamh_usage_predo_2025_s_poly.shp',
+  'fsa':
+  'D:/GIS/saint_malachie_gisoo_data/input_data/forward_sortation_areas'
+  '/dmti_forwardsortationareas_2025_s_poly.shp'
 }
 
 # Defining a directory for all the output data layers
@@ -44,14 +47,5 @@ output_paths_dir = \
 # Preparing a bedding for output data layers paths
 output_paths = {
   'nrcan_fixed': '',
-  'geoindex_fixed': '',
-  'Clipped Fixed GeoIndex': '',
-  'CERC Property Assessment': '',
-  'Splitted CERC NRCans': '',
-  'Pairwise Clipped Property Assessment Partitions': '',
-  'Pairwise Clipped Merged Property Assessment': '',
-  'Property Assessment and NRCan': '',
-  'Property Assessment and NRCan and GeoIndex': '',
-  'Deleted Duplicates Layer': '',
-  'Single Parts Layer': ''
+  'geoindex_fixed': ''
 }

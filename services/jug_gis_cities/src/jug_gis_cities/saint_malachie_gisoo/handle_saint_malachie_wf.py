@@ -24,6 +24,9 @@ nrcan = \
 geoindex = \
   ScrubLayer(paths.qgis_path, paths.input_paths['qc_geoindex'], 'geoindex')
 
+fsa = \
+  ScrubLayer(paths.qgis_path, paths.input_paths['fsa'], 'fsa')
+
 # Processing the NRCan layer includes fixing its geometries
 print('Processing the NRCan layer')
 print(nrcan)
@@ -44,6 +47,31 @@ geoindex.fix_geometries(paths.output_paths['geoindex_fixed'])
 
 # Defining a new layer for the fixed GeoIndex
 geoindex_fixed = ScrubLayer(
-  paths.qgis_path, paths.output_paths['Fixed GeoIndex'], 'geoindex_fixed')
+  paths.qgis_path, paths.output_paths['geoindex_fixed'], 'geoindex_fixed')
 geoindex_fixed.create_spatial_index()
 print(geoindex_fixed)
+
+# There is a step to add here, look at your workflow
+# Removing features that do not have provincial id (mostly building-free areas)
+
+# Remove the features
+geoindex_fixed.conditional_delete_record(
+  'g_id_provi', '=', 'Sans correspondance')
+
+# print(geoindex_fixed)
+
+geoindex_fixed.field_join(
+    joining_layer_path=paths.input_paths['qc_property_roll_2025'],
+    joining_layer_name='geoindex_field_join_roll',
+    target_field='g_id_provi',
+    join_field='ueid_provinc',
+    join_fields=None,
+    prefix='rl'
+)
+
+# Defining a new layer for the fixed GeoIndex
+geoindex_field_join_roll = ScrubLayer(
+  paths.qgis_path,
+  paths.output_paths['geoindex_fixed'], 'geoindex_field_join_roll')
+geoindex_field_join_roll.create_spatial_index()
+print(geoindex_field_join_roll)
