@@ -101,3 +101,12 @@ print(saint_malachie_gisoo_with_fsa)
 
 saint_malachie_gisoo_with_fsa.conditional_delete_record(
   'rl_ad_ad_1', 'IS', 'NULL')
+
+# This dataset is already cleaned, but six additional steps will be added
+# to optimize the process. Two of them improve the earlier steps.
+# The final four steps are listed below, and the required methods to
+# carry them out are already available.
+
+# 1 & 2: One feature for one main building. This consists of two steps.
+# 3: Remove unnecessary fields.
+# 4: Rename the fields.
