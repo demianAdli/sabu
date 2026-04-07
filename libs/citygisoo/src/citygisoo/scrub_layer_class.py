@@ -10,7 +10,8 @@ import os
 from qgis.core import QgsApplication, QgsField, QgsProject, \
   QgsProcessingFeedback, QgsVectorLayer, QgsVectorDataProvider, \
   QgsExpressionContext, QgsExpressionContextUtils, edit, QgsFeatureRequest, \
-  QgsExpression, QgsVectorFileWriter, QgsCoordinateReferenceSystem
+  QgsExpression, QgsVectorFileWriter, QgsCoordinateReferenceSystem, \
+  QgsVectorLayerJoinInfo
 from qgis.PyQt.QtCore import QVariant
 from qgis.analysis import QgsNativeAlgorithms
 
@@ -29,6 +30,7 @@ class ScrubLayer:
     self.layer = self.load_layer()
     self.data_count = self.layer.featureCount()
 
+# The duplicate_layer messes with the text: solve it
   def duplicate_layer(self, output_path):
     options = QgsVectorFileWriter.SaveVectorOptions()
     options.driverName = 'ESRI Shapefile'
@@ -129,6 +131,42 @@ class ScrubLayer:
       'native:joinattributesbylocation', params, feedback=feedback)
     print(f'Spatial Join with input layer {self.layer_name} is completed.')
 
+  def field_join(
+          self,
+          joining_layer_path,
+          joining_layer_name,
+          target_field,
+          join_field,
+          join_fields=None,
+          prefix=''):
+    """Adds a QGIS layer join based on matching field values.
+
+    This is equivalent to adding a join from layer properties in QGIS.
+    If join_fields is None, all fields from the joining layer are added.
+    """
+    joining_layer = QgsVectorLayer(
+      joining_layer_path, joining_layer_name, 'ogr')
+    if not joining_layer.isValid():
+      raise ValueError(
+        f'Failed to load layer {joining_layer_name} '
+        f'from {joining_layer_path}')
+
+    QgsProject.instance().addMapLayer(joining_layer)
+
+    join_info = QgsVectorLayerJoinInfo()
+    join_info.setJoinLayer(joining_layer)
+    join_info.setTargetFieldName(target_field)
+    join_info.setJoinFieldName(join_field)
+    join_info.setPrefix(prefix)
+
+    if join_fields is not None:
+      join_info.setJoinFieldNamesSubset(join_fields)
+
+    self.layer.addJoin(join_info)
+    print(
+      f'Field Join of {self.layer_name} with input layer '
+      f'{joining_layer_name} is completed.')
+
   def clip_layer(self, overlay_layer, clipped_layer):
     """This must be tested"""
     QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
@@ -225,19 +263,25 @@ class ScrubLayer:
     self.layer.startEditing()
 
     if self.layer.deleteFeature(record_index):
-      print(f"Feature with ID {record_index} has been successfully removed.")
+      print(f'Feature with ID {record_index} has been successfully removed.')
     else:
-      print(f"Failed to remove feature with ID {record_index}.")
+      print(f'Failed to remove feature with ID {record_index}.')
 
     self.layer.commitChanges()
 
   def conditional_delete_record(self, field_name, operator, condition):
+    if condition is None:
+      condition = 'NULL'
+    elif isinstance(condition, str):
+      condition = f"'{condition}'"
+    else:
+      condition = str(condition)
+
     request = QgsFeatureRequest().setFilterExpression(
-      f'{field_name} {operator} {str(condition)}')
+      f'"{field_name}" {operator} {condition}')
     with edit(self.layer):
       for feature in self.layer.getFeatures(request):
         self.layer.deleteFeature(feature.id())
-    self.layer.commitChanges()
 
   def add_field(self, new_field_name):
     functionalities = self.layer.dataProvider().capabilities()
