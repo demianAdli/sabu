@@ -87,3 +87,15 @@ nrcan_spatial_join_geoindex = ScrubLayer(
 
 nrcan_spatial_join_geoindex.create_spatial_index()
 print(nrcan_spatial_join_geoindex)
+
+nrcan_spatial_join_geoindex.spatial_join(
+  fsa.layer_path,
+  paths.output_paths['saint_malachie_gisoo_with_fsa'])
+
+saint_malachie_gisoo_with_fsa = ScrubLayer(
+  paths.qgis_path,
+  paths.output_paths['saint_malachie_gisoo_with_fsa'],
+  'saint_malachie_gisoo_with_fsa')
+
+saint_malachie_gisoo_with_fsa.create_spatial_index()
+print(saint_malachie_gisoo_with_fsa)
