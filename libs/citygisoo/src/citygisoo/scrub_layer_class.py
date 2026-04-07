@@ -4,14 +4,17 @@ PyQGIS functionalities that are needed in the cleaning and updating
 Montreal Buildings dataset project, gathered in one class.
 Project Developer: Alireza Adli alireza.adli@concordia.ca
 """
-import processing
+import glob
 import os
+import shutil
+import tempfile
+
+import processing
 
 from qgis.core import QgsApplication, QgsField, QgsProject, \
   QgsProcessingFeedback, QgsVectorLayer, QgsVectorDataProvider, \
   QgsExpressionContext, QgsExpressionContextUtils, edit, QgsFeatureRequest, \
-  QgsExpression, QgsVectorFileWriter, QgsCoordinateReferenceSystem, \
-  QgsVectorLayerJoinInfo
+  QgsExpression, QgsVectorFileWriter, QgsCoordinateReferenceSystem
 from qgis.PyQt.QtCore import QVariant
 from qgis.analysis import QgsNativeAlgorithms
 
@@ -130,6 +133,29 @@ class ScrubLayer:
       'native:joinattributesbylocation', params, feedback=feedback)
     print(f'Spatial Join with input layer {self.layer_name} is completed.')
 
+  @staticmethod
+  def _replace_layer_files(source_path, destination_path):
+    source_base, source_ext = os.path.splitext(source_path)
+    destination_base, destination_ext = os.path.splitext(destination_path)
+
+    if source_ext.lower() != destination_ext.lower():
+      raise ValueError(
+        f'Cannot replace layer {destination_path} with {source_path} '
+        f'because their formats differ.')
+
+    if destination_ext.lower() == '.shp':
+      for existing_file in glob.glob(f'{destination_base}.*'):
+        os.remove(existing_file)
+
+      for source_file in glob.glob(f'{source_base}.*'):
+        extension = os.path.splitext(source_file)[1]
+        shutil.move(source_file, f'{destination_base}{extension}')
+      return
+
+    if os.path.exists(destination_path):
+      os.remove(destination_path)
+    shutil.move(source_path, destination_path)
+
   def field_join(
           self,
           joining_layer_path,
@@ -137,10 +163,11 @@ class ScrubLayer:
           target_field,
           join_field,
           join_fields=None,
-          prefix=''):
-    """Adds a QGIS layer join based on matching field values.
+          prefix='',
+          output_path=None):
+    """Joins fields from another layer and persists the result.
 
-    This is equivalent to adding a join from layer properties in QGIS.
+    If output_path is None, the current layer dataset is replaced in place.
     If join_fields is None, all fields from the joining layer are added.
     """
     joining_layer = QgsVectorLayer(
@@ -150,18 +177,40 @@ class ScrubLayer:
         f'Failed to load layer {joining_layer_name} '
         f'from {joining_layer_path}')
 
-    QgsProject.instance().addMapLayer(joining_layer)
+    QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
 
-    join_info = QgsVectorLayerJoinInfo()
-    join_info.setJoinLayer(joining_layer)
-    join_info.setTargetFieldName(target_field)
-    join_info.setJoinFieldName(join_field)
-    join_info.setPrefix(prefix)
+    final_output_path = output_path or self.layer_path
+    temp_dir = None
+    processing_output_path = final_output_path
 
-    if join_fields is not None:
-      join_info.setJoinFieldNamesSubset(join_fields)
+    if final_output_path == self.layer_path:
+      temp_dir = tempfile.mkdtemp(prefix='field_join_')
+      layer_extension = os.path.splitext(self.layer_path)[1]
+      processing_output_path = os.path.join(
+        temp_dir, f'{self.layer_name}{layer_extension}')
 
-    self.layer.addJoin(join_info)
+    params = {
+      'INPUT': self.layer,
+      'FIELD': target_field,
+      'INPUT_2': joining_layer,
+      'FIELD_2': join_field,
+      'FIELDS_TO_COPY': join_fields or [],
+      'METHOD': 1,
+      'DISCARD_NONMATCHING': False,
+      'PREFIX': prefix,
+      'OUTPUT': processing_output_path
+    }
+
+    processing.run('native:joinattributestable', params)
+
+    if final_output_path == self.layer_path:
+      old_layer_id = self.layer.id()
+      QgsProject.instance().removeMapLayer(old_layer_id)
+      self._replace_layer_files(processing_output_path, self.layer_path)
+      shutil.rmtree(temp_dir)
+      self.layer = self.load_layer()
+      self.data_count = self.layer.featureCount()
+
     print(
       f'Field Join of {self.layer_name} with input layer '
       f'{joining_layer_name} is completed.')
@@ -269,9 +318,7 @@ class ScrubLayer:
     self.layer.commitChanges()
 
   def conditional_delete_record(self, field_name, operator, condition):
-    if condition is None:
-      condition = 'NULL'
-    elif isinstance(condition, str):
+    if isinstance(condition, str) and condition.upper() != 'NULL':
       condition = f"'{condition}'"
     else:
       condition = str(condition)
