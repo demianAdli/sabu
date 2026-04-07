@@ -30,7 +30,6 @@ class ScrubLayer:
     self.layer = self.load_layer()
     self.data_count = self.layer.featureCount()
 
-# The duplicate_layer messes with the text: solve it
   def duplicate_layer(self, output_path):
     options = QgsVectorFileWriter.SaveVectorOptions()
     options.driverName = 'ESRI Shapefile'
