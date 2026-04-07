@@ -75,3 +75,15 @@ geoindex_field_join_roll = ScrubLayer(
   paths.output_paths['geoindex_fixed'], 'geoindex_field_join_roll')
 geoindex_field_join_roll.create_spatial_index()
 print(geoindex_field_join_roll)
+
+nrcan_fixed.spatial_join(
+  geoindex_field_join_roll.layer_path,
+  paths.output_paths['nrcan_spatial_join_geoindex'])
+
+nrcan_spatial_join_geoindex = ScrubLayer(
+  paths.qgis_path,
+  paths.output_paths['nrcan_spatial_join_geoindex'],
+  'nrcan_spatial_join_geoindex')
+
+nrcan_spatial_join_geoindex.create_spatial_index()
+print(nrcan_spatial_join_geoindex)

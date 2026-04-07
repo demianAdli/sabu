@@ -47,5 +47,6 @@ output_paths_dir = \
 # Preparing a bedding for output data layers paths
 output_paths = {
   'nrcan_fixed': '',
-  'geoindex_fixed': ''
+  'geoindex_fixed': '',
+  'nrcan_spatial_join_geoindex': ''
 }
