@@ -58,21 +58,20 @@ print(geoindex_fixed)
 geoindex_fixed.conditional_delete_record(
   'g_id_provi', '=', 'Sans correspondance')
 
-# print(geoindex_fixed)
-
 geoindex_fixed.field_join(
     joining_layer_path=paths.input_paths['qc_property_roll_2025'],
-    joining_layer_name='geoindex_field_join_roll',
+    joining_layer_name='roll',
     target_field='g_id_provi',
     join_field='ueid_provinc',
     join_fields=None,
-    prefix='rl'
+    prefix='rl_',
+    output_path=paths.output_paths['geoindex_field_join_roll']
 )
 
-# Defining a new layer for the fixed GeoIndex
+# Defining a new layer for the geoindex_field_join_roll
 geoindex_field_join_roll = ScrubLayer(
   paths.qgis_path,
-  paths.output_paths['geoindex_fixed'], 'geoindex_field_join_roll')
+  paths.output_paths['geoindex_field_join_roll'], 'geoindex_field_join_roll')
 geoindex_field_join_roll.create_spatial_index()
 print(geoindex_field_join_roll)
 
@@ -99,3 +98,6 @@ saint_malachie_gisoo_with_fsa = ScrubLayer(
 
 saint_malachie_gisoo_with_fsa.create_spatial_index()
 print(saint_malachie_gisoo_with_fsa)
+
+saint_malachie_gisoo_with_fsa.conditional_delete_record(
+  'rl_ad_ad_1', 'IS', 'NULL')

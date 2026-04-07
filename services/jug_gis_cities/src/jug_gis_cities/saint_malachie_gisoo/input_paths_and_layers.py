@@ -48,6 +48,7 @@ output_paths_dir = \
 output_paths = {
   'nrcan_fixed': '',
   'geoindex_fixed': '',
+  'geoindex_field_join_roll': '',
   'nrcan_spatial_join_geoindex': '',
   'saint_malachie_gisoo_with_fsa': ''
 }
