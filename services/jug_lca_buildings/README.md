@@ -40,7 +40,7 @@ Contract examples already exist in the repository and are the safest starting po
 
 - [`contracts/examples/jug_lca_buildings/README.md`](../../contracts/examples/jug_lca_buildings/README.md)
 - [`contracts/openapi/jug_lca_buildings.yaml`](../../contracts/openapi/jug_lca_buildings.yaml)
-- External examples repository: <https://github.com/demianAdli/jugs-test-data-and-examples/tree/main/services/jug_lca_buildings>
+- External examples repository: <https://github.com/demianAdli/sabu-test-data-and-examples/tree/main/services/jug_lca_buildings>
 
 The contract examples include:
 
