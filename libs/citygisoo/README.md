@@ -22,7 +22,7 @@ The design principles and methodology behind this approach will be discussed in 
 
 Sabu is a sector-based carbon-emission evaluation framework built on a microservices architecture.
 
-Each module runs as an independent service (a “jug”). Current services focus on building life-cycle assessment and city-scale geospatial cleaning and validation workflows. In addition to these services, Sabu includes shared Python libraries such as `jugs-chassis`, which provide reusable internal functionality.
+Each module runs as an independent service (a “jug”). Current services focus on building life-cycle assessment and city-scale geospatial cleaning and validation workflows. In addition to these services, Sabu includes shared Python libraries such as `sabu-chassis`, which provide reusable internal functionality.
 
 ## Testing and Publication Context
 
