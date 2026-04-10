@@ -13,8 +13,8 @@ except ModuleNotFoundError:
     from src.jug_lca_buildings.resources.emissions \
         import blp as emissions_blueprint
 
-from jugs_chassis.logging.config import configure_logging
-from jugs_chassis.logging.context import set_request_id, get_request_id
+from sabu_chassis.logging.config import configure_logging
+from sabu_chassis.logging.context import set_request_id, get_request_id
 
 configure_logging()
 logger = logging.getLogger(__name__)
