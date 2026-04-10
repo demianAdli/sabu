@@ -1,11 +1,24 @@
 # Changelog
 
-## [0.1.2] - 2026-03-07
+## [Unreleased]
 
-- file_join() was added
-- conditional_delete_record() was extended to cover strings
-- must be extended: spatial join for different predicates
-- must be extended: The duplicate_layer messes with the text: solve it
+### Planned
+- Extend spatial join to support multiple predicates.
+
+### Known limitations
+- `duplicate_layer()` causes incorrect text handling.
+
+---
+
+## [0.1.2] - 2026-04-10
+
+### Added
+- Added `file_join()`.
+
+### Changed
+- Extended `conditional_delete_record()` to support string conditions.
+
+---
 
 ## [0.1.1] - 2026-03-07
 
