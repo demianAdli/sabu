@@ -23,7 +23,7 @@ According to the design description, the validator:
 - Is designed to work with **any city dataset** following cleaning and preparation through CityGISOO.
 
 Repository path:  
-https://github.com/demianAdli/jugs/tree/main/services/jug_gis/validation_gis_oo
+https://github.com/demianAdli/sabu/tree/main/services/jug_gis_validation
 
 ---
 
@@ -86,7 +86,7 @@ The recommended way to use this module is through the interactive notebook:
 
 GitHub provides reliable `.ipynb` rendering, so **please use the following link**:
 
-👉 **https://github.com/demianAdli/jugs/blob/main/services/jug_gis/validation_gis_oo/interactive_validation_wf.ipynb**
+👉 **https://github.com/demianAdli/sabu/blob/main/services/jug_gis_validation/notebooks/interactive_validation_wf.ipynb**
 
 Gitea currently has issues rendering Jupyter notebooks, so GitHub is the preferred viewer.
 

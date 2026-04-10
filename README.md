@@ -1,13 +1,13 @@
-# JUGS
+# SABU
 
-**JUGS** is a software framework designed to evaluate carbon emissions in a **sector-based** manner.  
+**SABU** is a software framework designed to evaluate carbon emissions in a **sector-based** manner.  
 The framework follows a **microservices architecture**, in which each independent module operates as an autonomous service—referred to as a _jug_.
 
 ---
 
 ## Table of Contents
 
-- [JUGS](#jugs)
+- [SABU](#sabu)
   - [Services](#services)
   - [Shared Libraries](#shared-libraries)
   - [Development and Collaboration](#development-and-collaboration)

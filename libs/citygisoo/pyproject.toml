@@ -30,6 +30,6 @@ include = ['citygisoo*']
 
 [project.urls]
 Homepage = 'https://demianadli.com'
-Repository = 'https://github.com/demianAdli/jugs'
-Source = 'https://github.com/demianAdli/jugs/tree/main/libs/citygisoo'
-Issues = 'https://github.com/demianAdli/jugs/issues'
+Repository = 'https://github.com/demianAdli/sabu'
+Source = 'https://github.com/demianAdli/sabu/tree/main/libs/citygisoo'
+Issues = 'https://github.com/demianAdli/sabu/issues'

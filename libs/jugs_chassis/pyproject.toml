@@ -33,6 +33,6 @@ jugs_chassis = ['logging/logging_config.json']
 
 [project.urls]
 Homepage = 'https://demianadli.com'
-Repository = 'https://github.com/demianAdli/jugs'
-Source = 'https://github.com/demianAdli/jugs/tree/main/libs/jugs_chassis'
-Issues = 'https://github.com/demianAdli/jugs/issues'
+Repository = 'https://github.com/demianAdli/sabu'
+Source = 'https://github.com/demianAdli/sabu/tree/main/libs/jugs_chassis'
+Issues = 'https://github.com/demianAdli/sabu/issues'
