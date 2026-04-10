@@ -11,4 +11,4 @@ recursive-exclude logs *
 
 # Include docs or configs if needed later
 include README.md
-include src/jugs_chassis/logging/logging_config.json
+include src/sabu_chassis/logging/logging_config.json

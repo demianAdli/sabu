@@ -24,7 +24,7 @@ def infer_service_name() -> str:
     Precedence:
       1) LOG_SERVICE (explicit)
       2) infer core name from a parent directory (default pattern: 'jug_<core>')
-      3) fallback core name (default: 'jugs')
+      3) fallback core name (default: 'sabu')
 
     Composition:
       f'{LOG_SERVICE_PREFIX}{core}{LOG_SERVICE_SUFFIX}'
@@ -32,7 +32,7 @@ def infer_service_name() -> str:
     Env knobs:
       - LOG_SERVICE_PREFIX: default ''
       - LOG_SERVICE_SUFFIX: default '-api'
-      - LOG_SERVICE_FALLBACK: default 'jugs'
+      - LOG_SERVICE_FALLBACK: default 'sabu'
       - LOG_SERVICE_DIR_PREFIX: default 'jug_'   (what to look for in directory names)
       - LOG_SERVICE_STRIP_PREFIX: default 'jug_' (what to strip before composing)
         (You can set both DIR_PREFIX and STRIP_PREFIX to keep them consistent.)
@@ -43,7 +43,7 @@ def infer_service_name() -> str:
 
     prefix = os.getenv('LOG_SERVICE_PREFIX', '')
     suffix = os.getenv('LOG_SERVICE_SUFFIX', '-api')
-    fallback_core = os.getenv('LOG_SERVICE_FALLBACK', 'jugs')
+    fallback_core = os.getenv('LOG_SERVICE_FALLBACK', 'sabu')
 
     dir_prefix = os.getenv('LOG_SERVICE_DIR_PREFIX', 'jug_')
     strip_prefix = os.getenv('LOG_SERVICE_STRIP_PREFIX', dir_prefix)
@@ -84,7 +84,7 @@ def _load_default_config_from_package() -> dict[str, Any]:
     if ir_files is None:
         raise RuntimeError('importlib.resources.files is unavailable; need Python 3.9+')
 
-    pkg_root = __package__.split('.')[0]  # 'jugs_chassis'
+    pkg_root = __package__.split('.')[0]  # 'sabu_chassis'
     cfg_path = ir_files(pkg_root).joinpath('logging').joinpath(DEFAULT_CONFIG_RESOURCE)
     raw = cfg_path.read_text(encoding='utf-8')
     return json.loads(raw)

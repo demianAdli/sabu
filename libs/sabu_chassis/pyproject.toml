@@ -29,7 +29,7 @@ where = ['src']
 include = ['sabu_chassis*']
 
 [tool.setuptools.package-data]
-jugs_chassis = ['logging/logging_config.json']
+sabu_chassis = ['logging/logging_config.json']
 
 [project.urls]
 Homepage = 'https://demianadli.com'

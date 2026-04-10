@@ -22,7 +22,7 @@ class ContextFilter(logging.Filter):
 
     def filter(self, record: logging.LogRecord) -> bool:
         record.request_id = get_request_id()
-        record.service = self._service or os.getenv('LOG_SERVICE', 'jugs-service')
+        record.service = self._service or os.getenv('LOG_SERVICE', 'sabu-service')
         record.env = self._env or os.getenv('LOG_ENV', 'dev')
         return True
 

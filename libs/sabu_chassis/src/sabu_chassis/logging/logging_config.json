@@ -2,11 +2,11 @@
   "version": 1,
   "disable_existing_loggers": false,
   "filters": {
-    "ctx": { "()": "jugs_chassis.logging.filters.ContextFilter" },
-    "strip_ansi": { "()": "jugs_chassis.logging.filters.StripANSIFilter" }
+    "ctx": { "()": "sabu_chassis.logging.filters.ContextFilter" },
+    "strip_ansi": { "()": "sabu_chassis.logging.filters.StripANSIFilter" }
   },
   "formatters": {
-    "json": { "()": "jugs_chassis.logging.formatters.JsonFormatter" },
+    "json": { "()": "sabu_chassis.logging.formatters.JsonFormatter" },
     "pretty": {
       "format": "%(asctime)s | %(levelname)s | %(service)s | %(name)s | %(request_id)s | %(message)s"
     }
@@ -24,7 +24,7 @@
       "level": "DEBUG",
       "formatter": "json",
       "filters": ["ctx", "strip_ansi"],
-      "filename": "logs/jugs.log",
+      "filename": "logs/sabu.log",
       "maxBytes": 3000000,
       "backupCount": 10,
       "encoding": "utf-8"
