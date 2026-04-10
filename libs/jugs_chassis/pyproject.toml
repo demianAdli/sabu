@@ -4,8 +4,8 @@ build-backend = 'setuptools.build_meta'
 
 [project]
 name = 'jugs-chassis'
-version = '0.1.2'
-description = 'Shared chassis (logging, etc.) for JUGS services'
+version = '0.1.4'
+description = 'DEPRECATED: replaced by sabu-chassis'
 readme = 'README.md'
 requires-python = '>=3.10'
 dependencies = []
@@ -32,7 +32,8 @@ include = ['jugs_chassis*']
 jugs_chassis = ['logging/logging_config.json']
 
 [project.urls]
-Homepage = 'https://demianadli.com'
+Homepage = 'https://pypi.org/project/sabu-chassis/'
 Repository = 'https://github.com/demianAdli/sabu'
-Source = 'https://github.com/demianAdli/sabu/tree/main/libs/jugs_chassis'
+Source = 'https://github.com/demianAdli/sabu/tree/main/libs/sabu_chassis'
+Replacement = 'https://pypi.org/project/sabu-chassis/'
 Issues = 'https://github.com/demianAdli/sabu/issues'
