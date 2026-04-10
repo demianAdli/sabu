@@ -1,0 +1,38 @@
+[build-system]
+requires = ['setuptools>=68', 'wheel']
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = 'sabu-chassis'
+version = '0.1.0'
+description = 'Shared chassis (logging, etc.) for Sabu services'
+readme = 'README.md'
+requires-python = '>=3.10'
+dependencies = []
+license = { file = 'LICENSE' }
+authors = [{ name = 'Alireza Adli' }]
+classifiers = [
+  'License :: OSI Approved :: Apache Software License',
+  'Programming Language :: Python :: 3',
+  'Programming Language :: Python :: 3.10',
+  'Programming Language :: Python :: 3.11',
+  'Programming Language :: Python :: 3.12',
+  'Programming Language :: Python :: 3.13',
+  'Operating System :: OS Independent',
+]
+
+[tool.setuptools]
+package-dir = { '' = 'src' }
+
+[tool.setuptools.packages.find]
+where = ['src']
+include = ['sabu_chassis*']
+
+[tool.setuptools.package-data]
+jugs_chassis = ['logging/logging_config.json']
+
+[project.urls]
+Homepage = 'https://demianadli.com'
+Repository = 'https://github.com/demianAdli/sabu'
+Source = 'https://github.com/demianAdli/sabu/tree/main/libs/sabu_chassis'
+Issues = 'https://github.com/demianAdli/sabu/issues'

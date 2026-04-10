@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "disable_existing_loggers": false,
+  "filters": {
+    "ctx": { "()": "jugs_chassis.logging.filters.ContextFilter" },
+    "strip_ansi": { "()": "jugs_chassis.logging.filters.StripANSIFilter" }
+  },
+  "formatters": {
+    "json": { "()": "jugs_chassis.logging.formatters.JsonFormatter" },
+    "pretty": {
+      "format": "%(asctime)s | %(levelname)s | %(service)s | %(name)s | %(request_id)s | %(message)s"
+    }
+  },
+  "handlers": {
+    "stdout": {
+      "class": "logging.StreamHandler",
+      "stream": "ext://sys.stdout",
+      "level": "INFO",
+      "formatter": "pretty",
+      "filters": ["ctx", "strip_ansi"]
+    },
+    "file": {
+      "class": "logging.handlers.RotatingFileHandler",
+      "level": "DEBUG",
+      "formatter": "json",
+      "filters": ["ctx", "strip_ansi"],
+      "filename": "logs/jugs.log",
+      "maxBytes": 3000000,
+      "backupCount": 10,
+      "encoding": "utf-8"
+    }
+  },
+  "root": {
+    "level": "DEBUG",
+    "handlers": ["stdout", "file"]
+  },
+  "loggers": {
+    "werkzeug": { "level": "INFO" },
+    "urllib3": { "level": "WARNING" },
+    "marshmallow": { "level": "WARNING" }
+  }
+}
