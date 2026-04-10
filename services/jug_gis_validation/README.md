@@ -13,7 +13,7 @@ alireza.adli@mail.concordia.ca
 The **Validation GIS-OO component** is responsible for comparing cleaned geospatial datasets with census data to ensure consistency, completeness, and accuracy at the district level.  
 The **conceptual basis for incorporating census data into the validation workflow comes from work and discussions with Oriol Gavalda (oriol.gavalda@concordia.ca)**, particularly regarding how census units can be related to district-level building datasets.
 
-This validation module is part of the larger **JUGS framework**, supporting disaggregated carbon-emissions evaluation beginning from the building sector. It integrates naturally with CityGISOO’s automated cleaning workflows and provides a lightweight, extensible interface to perform data verification across postal-code prefixes (FSA).
+This validation module is part of the larger **Sabu framework**, supporting disaggregated carbon-emissions evaluation beginning from the building sector. It integrates naturally with CityGISOO’s automated cleaning workflows and provides a lightweight, extensible interface to perform data verification across postal-code prefixes (FSA).
 
 According to the design description, the validator:
 
@@ -107,12 +107,12 @@ These outputs allow different levels of integration—from automated pipelines t
 
 ## Architecture
 
-The validation component fits into the broader **CityGISOO / JUGS microservices workflow**, following a modular and extensible design:
+The validation component fits into the broader **CityGISOO / Sabu microservices workflow**, following a modular and extensible design:
 
 - Runs after the geospatial cleaning pipeline
 - Uses a generic, city-agnostic workflow structure
 - Can be executed standalone or embedded in a more automated sequence
-- Supports the architectural goals of JUGS: modularity, reusability, and scalability
+- Supports the architectural goals of Sabu: modularity, reusability, and scalability
 
 ---
 
