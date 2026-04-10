@@ -33,7 +33,7 @@ The framework follows a **microservices architecture**, in which each independen
 Shared libraries provide reusable, non-deployable components that can be **installed and directly imported as Python packages** to support service development.  
 Unlike services, they do not communicate via APIs and are not deployed independently.
 
-- **`jugs_chassis`**  
+- **`sabu-chassis`**  
   A foundational library offering shared infrastructure modules used across services (jugs), such as common utilities, conventions, and cross-cutting concerns.
 
 - **`citygisoo`**  
