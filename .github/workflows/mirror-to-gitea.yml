@@ -30,7 +30,7 @@ jobs:
           set -euo pipefail
 
           # Your real remote
-          git remote add gitea https://a_adli:${GITEA_TOKEN}@ngci.encs.concordia.ca/gitea/a_adli/jugs.git
+          git remote add gitea https://a_adli:${GITEA_TOKEN}@ngci.encs.concordia.ca/gitea/a_adli/sabu.git
 
           # Push all branches and tags, but DO NOT delete remote-only refs (no --mirror)
           git push gitea --all
