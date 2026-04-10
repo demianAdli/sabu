@@ -81,6 +81,7 @@ hub/
 
 # Others
 symbology-style.db
+geoindex_field_join_roll.gpkg
 
 # Runtime/cache artifacts (generated)
 .runtime/
