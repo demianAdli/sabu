@@ -1,4 +1,4 @@
-# Validation GIS-OO (CityGISOO Validation Component)
+# GISOO Validation
 
 **Project Developer:**  
 **Alireza Adli**  
@@ -10,7 +10,7 @@ alireza.adli@mail.concordia.ca
 
 ## Overview
 
-The **Validation GIS-OO component** is responsible for comparing cleaned geospatial datasets with census data to ensure consistency, completeness, and accuracy at the district level.  
+**GISOO Validation** service is responsible for comparing cleaned geospatial datasets with census data to ensure consistency, completeness, and accuracy at the district level.  
 The **conceptual basis for incorporating census data into the validation workflow comes from work and discussions with Oriol Gavalda (oriol.gavalda@concordia.ca)**, particularly regarding how census units can be related to district-level building datasets.
 
 This validation module is part of the larger **Sabu framework**, supporting disaggregated carbon-emissions evaluation beginning from the building sector. It integrates naturally with CityGISOO’s automated cleaning workflows and provides a lightweight, extensible interface to perform data verification across postal-code prefixes (FSA).
@@ -107,11 +107,11 @@ These outputs allow different levels of integration—from automated pipelines t
 
 ## Architecture
 
-The validation component fits into the broader **CityGISOO / Sabu microservices workflow**, following a modular and extensible design:
+The validation service fits into the broader **Sabu framework**, following a modular and extensible microservice-based design:
 
-- Runs after the geospatial cleaning pipeline
 - Uses a generic, city-agnostic workflow structure
-- Can be executed standalone or embedded in a more automated sequence
+- Can be orchestrated with GISOO-based services to validate their results
+- Can be executed as a standalone service or embedded in a more automated sequence
 - Supports the architectural goals of Sabu: modularity, reusability, and scalability
 
 ---
@@ -121,3 +121,4 @@ The validation component fits into the broader **CityGISOO / Sabu microservices 
 **Alireza Adli**  
 alireza.adli4@gmail.com  
 alireza.adli@mail.concordia.ca
+www.demianadli.com
