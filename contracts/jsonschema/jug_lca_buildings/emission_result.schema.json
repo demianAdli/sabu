@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "contracts/jsonschema/jug_lca_buildings/emission_result.schema.json",
   "title": "JUG LCA Buildings Emission Result Item",
-  "description": "One item from the emissions response array.",
+  "description": "One item from the emissions response array. All emission values are in kgCO2e for one building.",
   "type": "object",
   "required": [
     "opening_embodied_emissions",
@@ -13,12 +13,30 @@
     "component_end_of_life_emissions"
   ],
   "properties": {
-    "opening_embodied_emissions": { "type": "number" },
-    "envelope_embodied_emissions": { "type": "number" },
-    "component_embodied_emissions": { "type": "number" },
-    "opening_end_of_life_emissions": { "type": "number" },
-    "envelope_end_of_life_emissions": { "type": "number" },
-    "component_end_of_life_emissions": { "type": "number" }
+    "opening_embodied_emissions": {
+      "type": "number",
+      "description": "Opening embodied emissions in kgCO2e for one building."
+    },
+    "envelope_embodied_emissions": {
+      "type": "number",
+      "description": "Envelope embodied emissions in kgCO2e for one building."
+    },
+    "component_embodied_emissions": {
+      "type": "number",
+      "description": "Total embodied component emissions in kgCO2e for one building."
+    },
+    "opening_end_of_life_emissions": {
+      "type": "number",
+      "description": "Opening end-of-life emissions in kgCO2e for one building."
+    },
+    "envelope_end_of_life_emissions": {
+      "type": "number",
+      "description": "Envelope end-of-life emissions in kgCO2e for one building."
+    },
+    "component_end_of_life_emissions": {
+      "type": "number",
+      "description": "Total component end-of-life emissions in kgCO2e for one building."
+    }
   },
   "additionalProperties": true
 }

@@ -122,6 +122,7 @@ class TestEmissionsApi(unittest.TestCase):
             'building_index,feature_id,name,address,function',
             csv_body,
         )
+        self.assertIn('opening_embodied_emissions_kgco2e', csv_body)
         self.assertIn('TOTAL', csv_body)
         self.assertIn('Building 1', csv_body)
 
@@ -137,30 +138,30 @@ class TestEmissionsApi(unittest.TestCase):
 
         building_row = rows[0]
         self.assertEqual(
-            float(building_row['total_embodied_emissions']),
+            float(building_row['total_embodied_emissions_kgco2e']),
             3.0,
         )
         self.assertEqual(
-            float(building_row['total_end_of_life_emissions']),
+            float(building_row['total_end_of_life_emissions_kgco2e']),
             6.0,
         )
         self.assertEqual(
-            float(building_row['total_lca_emissions']),
+            float(building_row['total_lca_emissions_kgco2e']),
             9.0,
         )
 
         total_row = rows[1]
         self.assertEqual(total_row['feature_id'], 'TOTAL')
         self.assertEqual(
-            float(total_row['total_embodied_emissions']),
+            float(total_row['total_embodied_emissions_kgco2e']),
             3.0,
         )
         self.assertEqual(
-            float(total_row['total_end_of_life_emissions']),
+            float(total_row['total_end_of_life_emissions_kgco2e']),
             6.0,
         )
         self.assertEqual(
-            float(total_row['total_lca_emissions']),
+            float(total_row['total_lca_emissions_kgco2e']),
             9.0,
         )
 

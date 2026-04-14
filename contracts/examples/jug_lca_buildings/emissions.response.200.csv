@@ -1,3 +1,3 @@
-building_index,feature_id,name,address,function,height,year_of_construction,opening_embodied_emissions,envelope_embodied_emissions,component_embodied_emissions,opening_end_of_life_emissions,envelope_end_of_life_emissions,component_end_of_life_emissions,total_embodied_emissions,total_end_of_life_emissions,total_lca_emissions
+building_index,feature_id,name,address,function,height,year_of_construction,opening_embodied_emissions_kgco2e,envelope_embodied_emissions_kgco2e,component_embodied_emissions_kgco2e,opening_end_of_life_emissions_kgco2e,envelope_end_of_life_emissions_kgco2e,component_end_of_life_emissions_kgco2e,total_embodied_emissions_kgco2e,total_end_of_life_emissions_kgco2e,total_lca_emissions_kgco2e
 1,1,Building 1,123 Test St,Residential,12.5,1995,1.0,2.0,3.0,4.0,5.0,6.0,3.0,6.0,9.0
 ,TOTAL,,,,,,,1.0,2.0,3.0,4.0,5.0,6.0,3.0,6.0,9.0

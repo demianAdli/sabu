@@ -5,6 +5,7 @@ info:
   description: |
     OpenAPI contract for the building life-cycle assessment service.
     This service computes embodied and end-of-life emissions from a GeoJSON FeatureCollection of buildings.
+    All emission values returned by this service are expressed in kgCO2e per building.
 servers:
   - url: http://localhost:5000
     description: Local development
@@ -30,7 +31,7 @@ paths:
               $ref: '#/components/schemas/LCAInputData'
       responses:
         '200':
-          description: CSV report generated successfully (when `export=csv`)
+          description: CSV report generated successfully (when `export=csv`). All emission values in the CSV are in kgCO2e.
           content:
             text/csv:
               schema:
@@ -39,11 +40,11 @@ paths:
                 csvReport:
                   summary: Emissions CSV report
                   value: |
-                    building_index,feature_id,name,address,function,height,year_of_construction,opening_embodied_emissions,envelope_embodied_emissions,component_embodied_emissions,opening_end_of_life_emissions,envelope_end_of_life_emissions,component_end_of_life_emissions,total_embodied_emissions,total_end_of_life_emissions,total_lca_emissions
+                    building_index,feature_id,name,address,function,height,year_of_construction,opening_embodied_emissions_kgco2e,envelope_embodied_emissions_kgco2e,component_embodied_emissions_kgco2e,opening_end_of_life_emissions_kgco2e,envelope_end_of_life_emissions_kgco2e,component_end_of_life_emissions_kgco2e,total_embodied_emissions_kgco2e,total_end_of_life_emissions_kgco2e,total_lca_emissions_kgco2e
                     1,1,Building 1,123 Test St,Residential,12.5,1995,1.0,2.0,3.0,4.0,5.0,6.0,3.0,6.0,9.0
                     ,TOTAL,,,,,,,1.0,2.0,3.0,4.0,5.0,6.0,3.0,6.0,9.0
         '201':
-          description: Emissions calculated successfully
+          description: Emissions calculated successfully. All emission values in the response are in kgCO2e.
           content:
             application/json:
               schema:
@@ -95,13 +96,13 @@ paths:
                   description: GeoJSON file containing a FeatureCollection of building footprints and properties
       responses:
         '200':
-          description: CSV report generated successfully (when `export=csv`)
+          description: CSV report generated successfully (when `export=csv`). All emission values in the CSV are in kgCO2e.
           content:
             text/csv:
               schema:
                 type: string
         '201':
-          description: Emissions calculated successfully
+          description: Emissions calculated successfully. All emission values in the response are in kgCO2e.
           content:
             application/json:
               schema:
@@ -198,30 +199,37 @@ components:
           example: 1995
     EmissionResult:
       type: object
+      description: Per-building emission totals in kgCO2e.
       properties:
         opening_embodied_emissions:
           type: number
           format: float
+          description: Opening embodied emissions in kgCO2e for one building.
           example: 1.0
         envelope_embodied_emissions:
           type: number
           format: float
+          description: Envelope embodied emissions in kgCO2e for one building.
           example: 2.0
         component_embodied_emissions:
           type: number
           format: float
+          description: Total embodied component emissions in kgCO2e for one building.
           example: 3.0
         opening_end_of_life_emissions:
           type: number
           format: float
+          description: Opening end-of-life emissions in kgCO2e for one building.
           example: 4.0
         envelope_end_of_life_emissions:
           type: number
           format: float
+          description: Envelope end-of-life emissions in kgCO2e for one building.
           example: 5.0
         component_end_of_life_emissions:
           type: number
           format: float
+          description: Total component end-of-life emissions in kgCO2e for one building.
           example: 6.0
       additionalProperties: true
     ErrorResponse:

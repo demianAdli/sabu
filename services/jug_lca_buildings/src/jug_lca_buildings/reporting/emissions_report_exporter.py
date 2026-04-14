@@ -21,6 +21,18 @@ class EmissionsReportExporter:
         'component_end_of_life_emissions',
     ]
 
+    CSV_COLUMN_RENAMES = {
+        'opening_embodied_emissions': 'opening_embodied_emissions_kgco2e',
+        'envelope_embodied_emissions': 'envelope_embodied_emissions_kgco2e',
+        'component_embodied_emissions': 'component_embodied_emissions_kgco2e',
+        'opening_end_of_life_emissions': 'opening_end_of_life_emissions_kgco2e',
+        'envelope_end_of_life_emissions': 'envelope_end_of_life_emissions_kgco2e',
+        'component_end_of_life_emissions': 'component_end_of_life_emissions_kgco2e',
+        'total_embodied_emissions': 'total_embodied_emissions_kgco2e',
+        'total_end_of_life_emissions': 'total_end_of_life_emissions_kgco2e',
+        'total_lca_emissions': 'total_lca_emissions_kgco2e',
+    }
+
     CSV_COLUMNS = [
         'building_index',
         'feature_id',
@@ -29,10 +41,10 @@ class EmissionsReportExporter:
         'function',
         'height',
         'year_of_construction',
-        *METRIC_FIELDS,
-        'total_embodied_emissions',
-        'total_end_of_life_emissions',
-        'total_lca_emissions',
+        *(CSV_COLUMN_RENAMES[field] for field in METRIC_FIELDS),
+        CSV_COLUMN_RENAMES['total_embodied_emissions'],
+        CSV_COLUMN_RENAMES['total_end_of_life_emissions'],
+        CSV_COLUMN_RENAMES['total_lca_emissions'],
     ]
 
     @classmethod
@@ -78,15 +90,24 @@ class EmissionsReportExporter:
             'function': props.get('function', ''),
             'height': props.get('height', ''),
             'year_of_construction': props.get('year_of_construction', ''),
-            'opening_embodied_emissions': opening_embodied,
-            'envelope_embodied_emissions': envelope_embodied,
-            'component_embodied_emissions': component_embodied,
-            'opening_end_of_life_emissions': opening_eol,
-            'envelope_end_of_life_emissions': envelope_eol,
-            'component_end_of_life_emissions': component_eol,
-            'total_embodied_emissions': total_embodied,
-            'total_end_of_life_emissions': total_eol,
-            'total_lca_emissions': total_embodied + total_eol,
+            cls.CSV_COLUMN_RENAMES['opening_embodied_emissions']:
+                opening_embodied,
+            cls.CSV_COLUMN_RENAMES['envelope_embodied_emissions']:
+                envelope_embodied,
+            cls.CSV_COLUMN_RENAMES['component_embodied_emissions']:
+                component_embodied,
+            cls.CSV_COLUMN_RENAMES['opening_end_of_life_emissions']:
+                opening_eol,
+            cls.CSV_COLUMN_RENAMES['envelope_end_of_life_emissions']:
+                envelope_eol,
+            cls.CSV_COLUMN_RENAMES['component_end_of_life_emissions']:
+                component_eol,
+            cls.CSV_COLUMN_RENAMES['total_embodied_emissions']:
+                total_embodied,
+            cls.CSV_COLUMN_RENAMES['total_end_of_life_emissions']:
+                total_eol,
+            cls.CSV_COLUMN_RENAMES['total_lca_emissions']:
+                total_embodied + total_eol,
         }
 
     @classmethod
@@ -97,12 +118,14 @@ class EmissionsReportExporter:
         writer = csv.DictWriter(out, fieldnames=cls.CSV_COLUMNS)
         writer.writeheader()
 
-        totals = {field: 0.0 for field in cls.METRIC_FIELDS}
+        totals = {
+            cls.CSV_COLUMN_RENAMES[field]: 0.0 for field in cls.METRIC_FIELDS
+        }
         totals.update(
             {
-                'total_embodied_emissions': 0.0,
-                'total_end_of_life_emissions': 0.0,
-                'total_lca_emissions': 0.0,
+                cls.CSV_COLUMN_RENAMES['total_embodied_emissions']: 0.0,
+                cls.CSV_COLUMN_RENAMES['total_end_of_life_emissions']: 0.0,
+                cls.CSV_COLUMN_RENAMES['total_lca_emissions']: 0.0,
             }
         )
 

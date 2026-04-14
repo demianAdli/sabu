@@ -4,6 +4,8 @@
 
 At a high level, the service accepts a GeoJSON `FeatureCollection` of buildings, runs a building life-cycle assessment workflow, and returns emissions results for the embodied and end-of-life stages. It can return either JSON results for API-to-API use or a CSV report for download and review.
 
+All emission values returned by this service are expressed as `kgCO2e` per building unless stated otherwise.
+
 This service is part of the broader JUGS project, where each "jug" is a focused microservice for a specific urban carbon or geospatial workflow. In that architecture, `jug_lca_buildings` covers the building LCA calculation step.
 
 ## What The Service Does
@@ -13,6 +15,13 @@ This service is part of the broader JUGS project, where each "jug" is a focused 
 - Calculates embodied and end-of-life emissions for each building.
 - Can export results as JSON or as a CSV report with per-building rows and totals.
 - Stores generated artifacts under `.runtime/jug_lca_buildings` unless `JUG_LCA_ARTIFACTS_DIR` is set.
+
+## Units
+
+- `opening_embodied_emissions`, `envelope_embodied_emissions`, and `component_embodied_emissions` are reported in `kgCO2e`.
+- `opening_end_of_life_emissions`, `envelope_end_of_life_emissions`, and `component_end_of_life_emissions` are reported in `kgCO2e`.
+- CSV totals such as `total_embodied_emissions`, `total_end_of_life_emissions`, and `total_lca_emissions` are also reported in `kgCO2e`.
+- These values are absolute totals for each building, not per-square-metre intensities and not tonnes.
 
 ## Inputs Needed For Testing
 
