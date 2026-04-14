@@ -65,10 +65,10 @@ class EmissionsReportExporter:
             result.get('component_end_of_life_emissions')
         )
 
-        total_embodied = (
-            opening_embodied + envelope_embodied + component_embodied
-        )
-        total_eol = opening_eol + envelope_eol + component_eol
+        # component_* is already the stage subtotal for
+        # opening + envelope, so re-adding the parts would double count.
+        total_embodied = component_embodied
+        total_eol = component_eol
 
         return {
             'building_index': index + 1,

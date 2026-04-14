@@ -3,6 +3,7 @@ import json
 import os
 import tempfile
 import unittest
+import csv
 from unittest.mock import patch
 
 from flask import Flask
@@ -11,6 +12,7 @@ from flask_smorest import Api
 from src.jug_lca_buildings.resources.emissions import (
     blp as emissions_blueprint,
 )
+from src.jug_lca_buildings.reporting import EmissionsReportExporter
 
 
 def _build_test_app():
@@ -122,6 +124,45 @@ class TestEmissionsApi(unittest.TestCase):
         )
         self.assertIn('TOTAL', csv_body)
         self.assertIn('Building 1', csv_body)
+
+    def test_csv_report_totals_do_not_double_count_component_values(self):
+        csv_text = EmissionsReportExporter.build_csv_text(
+            self.valid_payload,
+            self.workflow_result,
+        )
+
+        rows = list(csv.DictReader(io.StringIO(csv_text)))
+
+        self.assertEqual(len(rows), 2)
+
+        building_row = rows[0]
+        self.assertEqual(
+            float(building_row['total_embodied_emissions']),
+            3.0,
+        )
+        self.assertEqual(
+            float(building_row['total_end_of_life_emissions']),
+            6.0,
+        )
+        self.assertEqual(
+            float(building_row['total_lca_emissions']),
+            9.0,
+        )
+
+        total_row = rows[1]
+        self.assertEqual(total_row['feature_id'], 'TOTAL')
+        self.assertEqual(
+            float(total_row['total_embodied_emissions']),
+            3.0,
+        )
+        self.assertEqual(
+            float(total_row['total_end_of_life_emissions']),
+            6.0,
+        )
+        self.assertEqual(
+            float(total_row['total_lca_emissions']),
+            9.0,
+        )
 
     def test_post_emissions_invalid_export_format(self):
         response = self.client.post(
