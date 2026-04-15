@@ -262,7 +262,7 @@ class LCACarbonWorkflow:
   def _calculate_opening_emission(
           self,
           building, surface, boundary, opaque_surface_code,
-          density=2579):
+          density=2.579):
     """
       This calculates the opening emission by iterating through each thermal
       opening of each building's boundary. It is done based on the mentioned
@@ -322,7 +322,7 @@ class LCACarbonWorkflow:
       if (
           building_count == 1
           or building_count == total_buildings
-          or building_count % self.progress_log_every == 0):
+              or building_count % self.progress_log_every == 0):
         pct = (building_count / total_buildings * 100) if total_buildings else 0
         logger.info(
           f'Building emissions progress: {building_count}/{total_buildings} '
