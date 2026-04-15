@@ -261,8 +261,7 @@ class LCACarbonWorkflow:
 
   def _calculate_opening_emission(
           self,
-          building, surface, boundary, opaque_surface_code,
-          density=2.579):
+          building, surface, boundary, opaque_surface_code):
     """
       This calculates the opening emission by iterating through each thermal
       opening of each building's boundary. It is done based on the mentioned
@@ -270,10 +269,8 @@ class LCACarbonWorkflow:
       The arguments come from the calculate_building_component_emission()
       method and the output is used in the same method. So the current method
       is hidden to the user.
-      Windows have the assumed density of 2579 kg/m3
-      Window's thickness assumed the same as wall's thickness
-      These two values are being used to calculate window's workload for
-      the End of Life emission evaluation.
+      Opening workload for the End of Life emission evaluation is based on
+      the transparent-surface mass per unit area from the NRCan catalog.
       The method utilizes the OpeningEmission and EndOfLifeEmission classes of
       (currently named) life_cycle_assessment series of class.
       :param building: hub.city_model_structure.building.Building
@@ -282,7 +279,6 @@ class LCACarbonWorkflow:
       :param boundary:
       hub.city_model_structure.building_demand.thermal_boundary.ThermalBoundary
       :param opaque_surface_code: str
-      :param density: int
       :return: tuple
     """
     opening_emission = []
@@ -298,7 +294,8 @@ class LCACarbonWorkflow:
         OpeningEmission(opening_material['embodied_carbon'],
                         opening.area).calculate_opening_emission())
 
-      window_workload = opening.area * boundary.thickness * density
+      window_workload = \
+          opening.area * opening_material['mass_per_unit unit']
       opening_end_of_life_emission.append(EndOfLifeEmission(
           opening_material['recycling_ratio'],
           opening_material['onsite_recycling_ratio'],

@@ -46,12 +46,14 @@ class TestLCACarbonWorkflow(TestCase):
         windows = {
             ('Window',   '1000_1900_8'):
                 {'embodied_carbon': 86.79,
+                 'mass_per_unit unit': 39.49,
                  'recycling_ratio': 0.85,
                  'onsite_recycling_ratio': 0.5,
                  'company_recycling_ratio': 0.5,
                  'landfilling_ratio': 0.15},
             ('Skylight', '2020_3000_6'):
                 {'embodied_carbon': 94.5,
+                 'mass_per_unit unit': 39.49,
                  'recycling_ratio': 0.85,
                  'onsite_recycling_ratio': 0.5,
                  'company_recycling_ratio': 0.5,
@@ -138,12 +140,13 @@ class TestLCACarbonWorkflow(TestCase):
             # 3: expected transparent type
             # 4: opaque code
             # 5: expected embodied factor
-            # (1, 2, 3, 4, 5)
-            (1995, 'Wall',  'Window',   '1000_1900_8', 86.79),
-            (2022, 'Roof',  'Skylight', '2020_3000_6', 94.5),
+            # 6: expected mass per unit area
+            # (1, 2, 3, 4, 5, 6)
+            (1995, 'Wall',  'Window',   '1000_1900_8', 86.79, 39.49),
+            (2022, 'Roof',  'Skylight', '2020_3000_6', 94.5, 39.49),
         ]
 
-        for year, s_type, expected_ttype, opaque_code, factor in cases:
+        for year, s_type, expected_ttype, opaque_code, factor, mass_per_unit in cases:
             with self.subTest(year=year, surface_type=s_type):
                 # Reset per-case call histories
                 opening_emission_mock.reset_mock()
@@ -161,8 +164,7 @@ class TestLCACarbonWorkflow(TestCase):
                         building,
                         surface,
                         boundary,
-                        opaque_surface_code=opaque_code,
-                        density=2579
+                        opaque_surface_code=opaque_code
                     )
 
                 # Two openings -> two values
@@ -179,9 +181,8 @@ class TestLCACarbonWorkflow(TestCase):
                 opening_emission_mock.assert_has_calls(
                     [call(factor, 3.0), call(factor, 3.0)], any_order=True)
 
-                # EoL workload per opening = \
-                # area * boundary.thickness * density
-                w = 3.0 * 0.15 * 2579
+                # EoL workload per opening = area * mass_per_unit
+                w = 3.0 * mass_per_unit
                 self.assertAlmostEqual(opening_eol[0], 10.0 * w, places=6)
                 self.assertAlmostEqual(opening_eol[1], 10.0 * w, places=6)
 
