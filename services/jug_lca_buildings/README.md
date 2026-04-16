@@ -1,12 +1,12 @@
 # JUG LCA Buildings
 
-`jug_lca_buildings` is a JUGS microservice that estimates building-level life-cycle carbon emissions from GeoJSON building data.
+`jug_lca_buildings` is a Sabu microservice that estimates building-level life-cycle carbon emissions from GeoJSON building data.
 
 At a high level, the service accepts a GeoJSON `FeatureCollection` of buildings, runs a building life-cycle assessment workflow, and returns emissions results for the embodied and end-of-life stages. It can return either JSON results for API-to-API use or a CSV report for download and review.
 
 All emission values returned by this service are expressed as `kgCO2e` per building unless stated otherwise.
 
-This service is part of the broader JUGS project, where each "jug" is a focused microservice for a specific urban carbon or geospatial workflow. In that architecture, `jug_lca_buildings` covers the building LCA calculation step.
+This service is part of the broader Sabu project, where each "jug" is a focused microservice for a specific urban carbon or geospatial workflow. In that architecture, `jug_lca_buildings` covers the building LCA calculation step.
 
 ## What The Service Does
 
@@ -76,6 +76,6 @@ Once the service is running locally, you can test it by:
 
 Additional example inputs and supporting test data are also available in the external repository:
 
-<https://github.com/demianAdli/jugs-test-data-and-examples/tree/main/services/jug_lca_buildings>
+<https://github.com/demianAdli/sabu-test-data-and-examples/tree/main/services/jug_lca_buildings>
 
 Use that repository together with the local contract artifacts in this project when preparing manual tests or integration examples.
