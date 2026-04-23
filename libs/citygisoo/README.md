@@ -1,6 +1,21 @@
+<p align="center">
+  <img src="citygisoo_white_3.png" alt="citygisoo logo" width="960">
+</p>
+
 # citygisoo
 
 Project Developer: Alireza Adli
+
+## Table of Contents
+
+- [What Is citygisoo](#what-is-citygisoo)
+- [Approach and Scope](#approach-and-scope)
+- [citygisoo in Sabu](#citygisoo-in-sabu)
+- [Testing and Publication Context](#testing-and-publication-context)
+- [Main Class](#main-class)
+  - [ScrubLayer](#scrublayer)
+- [Setting up an environment to use standalone PyQGIS - How to import qgis.core](#setting-up-an-environment-to-use-standalone-pyqgis---how-to-import-qgiscore)
+- [Name and Dedication](#name-and-dedication)
 
 ## What Is citygisoo
 
