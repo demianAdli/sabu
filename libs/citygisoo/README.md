@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://demianadli.com/publications_en/citygisoo/logo.png" alt="citygisoo logo" width="960">
+  <img src="https://demianadli.com/projects_en/citygisoo/logo.png" alt="citygisoo logo" width="960">
 </p>
 
 # citygisoo
