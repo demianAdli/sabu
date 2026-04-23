@@ -11,4 +11,3 @@ recursive-exclude logs *
 
 # Include docs or configs if needed later
 include README.md
-include citygisoo_white_3.png
