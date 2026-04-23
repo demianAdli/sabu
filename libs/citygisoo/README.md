@@ -48,18 +48,6 @@ It is now being published so that it can be applied to other cities simply by in
 
 `ScrubLayer` is the core class of the package. It wraps and orchestrates essential PyQGIS operations used in geospatial cleaning workflows and provides higher-level methods for automating multi-step tasks.
 
-## Testing and Publication Context
-
-`citygisoo` was first tested on Montreal island geospatial data.
-
-It is now being published so it can be used for more cities by simply installing the package with `pip`.
-
-## Main Class
-
-### ScrubLayer
-
-`ScrubLayer` is the core class of the package. It wraps and orchestrates essential PyQGIS operations used in geospatial cleaning workflows and provides higher-level methods to automate multi-step tasks.
-
 ## Setting up an environment to use standalone PyQGIS - How to import qgis.core
 
 To use PyQGIS without having the QGIS application run in the background, one needs to add the python path to the environment variables. Here is how to do it on Windows:
@@ -95,6 +83,8 @@ To use PyQGIS without having the QGIS application run in the background, one nee
    d. In Python, run:
 
    > `import qgis.core`
+
+`citygisoo` must be installed with `pip` in the interpreter configured above.
 
 ## Name and Dedication
 
