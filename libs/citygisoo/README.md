@@ -12,8 +12,7 @@ Project Developer: Alireza Adli
 - [Approach and Scope](#approach-and-scope)
 - [citygisoo in Sabu](#citygisoo-in-sabu)
 - [Testing and Publication Context](#testing-and-publication-context)
-- [Main Class](#main-class)
-  - [ScrubLayer](#scrublayer)
+- [ScrubLayer](#scrublayer)
 - [Setting up an environment to use standalone PyQGIS - How to import qgis.core](#setting-up-an-environment-to-use-standalone-pyqgis---how-to-import-qgiscore)
 - [Name and Dedication](#name-and-dedication)
 
@@ -45,9 +44,7 @@ Each module runs as an independent service (a “jug”). Current services focus
 
 It is now being published so that it can be applied to other cities simply by installing the package via `pip`.
 
-## Main Class
-
-### ScrubLayer
+## ScrubLayer
 
 `ScrubLayer` is the core class of the package. It wraps and orchestrates essential PyQGIS operations used in geospatial cleaning workflows and provides higher-level methods for automating multi-step tasks.
 
