@@ -10,6 +10,13 @@
 
 ---
 
+## [0.1.3] - 2026-04-23
+
+### Changed
+- Updated the README logo to load from the public website so PyPI can render it correctly.
+
+---
+
 ## [0.1.2] - 2026-04-10
 
 ### Added
