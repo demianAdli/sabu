@@ -1,0 +1,15 @@
+services:
+  jug_lca_buildings:
+    image: demianadli/jug_lca_buildings:0.1.0
+    container_name: jug_lca_buildings
+    ports:
+      - "8080:5000"
+    environment:
+      LOG_DIR_BASE: /app
+      JUG_LCA_ARTIFACTS_DIR: /app/data/jug_lca_buildings
+    volumes:
+      - jug_lca_buildings_data:/app/data/jug_lca_buildings
+    restart: unless-stopped
+
+volumes:
+  jug_lca_buildings_data:

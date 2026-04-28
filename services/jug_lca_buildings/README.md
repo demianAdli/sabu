@@ -103,6 +103,16 @@ docker run --rm \
   your-dockerhub-user/jug_lca_buildings:0.1.0
 ```
 
+Compose example:
+
+```bash
+docker compose -f services/jug_lca_buildings/docker-compose.yml pull
+docker compose -f services/jug_lca_buildings/docker-compose.yml up -d
+```
+
+The compose file pulls the tagged image from Docker Hub, not a local build.
+Edit the `image:` line in [`services/jug_lca_buildings/docker-compose.yml`](docker-compose.yml) if you want to deploy a different released version.
+
 ## Versioned Publishing
 
 The GitHub Actions workflow publishes the image from a version tag only.
