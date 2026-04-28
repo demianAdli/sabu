@@ -1,0 +1,62 @@
+name: Publish jug_lca_buildings Docker image
+
+on:
+  push:
+    tags:
+      - "jug_lca_buildings-v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Package/image version to publish, for example 0.1.0"
+        required: true
+        type: string
+
+concurrency:
+  group: publish-jug-lca-buildings-docker
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            version="${{ github.event.inputs.version }}"
+          else
+            tag="${GITHUB_REF_NAME}"
+            version="${tag#jug_lca_buildings-v}"
+          fi
+
+          if [[ -z "${version}" ]]; then
+            echo "Version could not be resolved" >&2
+            exit 1
+          fi
+
+          echo "IMAGE_VERSION=${version}" >> "${GITHUB_ENV}"
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: services/jug_lca_buildings/docker/Dockerfile
+          push: true
+          build-args: |
+            JUG_LCA_BUILDINGS_VERSION=${{ env.IMAGE_VERSION }}
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/jug_lca_buildings:${{ env.IMAGE_VERSION }}

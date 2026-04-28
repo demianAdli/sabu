@@ -79,3 +79,41 @@ Additional example inputs and supporting test data are also available in the ext
 <https://github.com/demianAdli/sabu-test-data-and-examples/tree/main/services/jug_lca_buildings>
 
 Use that repository together with the local contract artifacts in this project when preparing manual tests or integration examples.
+
+## Docker Image
+
+The container image is intended to run the published PyPI package, not the local checkout.
+
+- Runtime port inside the container: `5000`
+- Recommended host mapping: `-p 8080:5000` or any other host port you prefer
+- Image tag should match the package version, for example `0.1.0`
+- Do not publish `latest`; only publish versioned tags
+
+Example build and run commands:
+
+```bash
+docker build \
+  -f services/jug_lca_buildings/docker/Dockerfile \
+  -t your-dockerhub-user/jug_lca_buildings:0.1.0 \
+  .
+
+docker run --rm \
+  -p 8080:5000 \
+  -e JUG_LCA_ARTIFACTS_DIR=/app/data/jug_lca_buildings \
+  your-dockerhub-user/jug_lca_buildings:0.1.0
+```
+
+## Versioned Publishing
+
+The GitHub Actions workflow publishes the image from a version tag only.
+
+- Tag format: `jug_lca_buildings-v0.1.0`
+- Docker Hub image tag: `0.1.0`
+- Workflow file: [`.github/workflows/publish-jug-lca-buildings-docker.yml`](../../.github/workflows/publish-jug-lca-buildings-docker.yml)
+
+Release flow:
+
+1. Publish `jug_lca_buildings==0.1.0` to PyPI.
+2. Create and push the git tag `jug_lca_buildings-v0.1.0`.
+3. GitHub Actions builds the Docker image with `JUG_LCA_BUILDINGS_VERSION=0.1.0`.
+4. The image is pushed to Docker Hub as `your-dockerhub-user/jug_lca_buildings:0.1.0`.
