@@ -13,6 +13,7 @@ recursive-exclude tests *
 
 # Include package docs and license
 include README.md
+include CHANGELOG.md
 include LICENSE
 
 # Include runtime data needed by the package
