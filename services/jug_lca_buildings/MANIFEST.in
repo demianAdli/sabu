@@ -1,0 +1,19 @@
+# Exclude Python cache and build junk
+global-exclude __pycache__
+global-exclude *.py[cod]
+global-exclude *.so
+global-exclude *.egg-info
+
+# Exclude dev artifacts
+recursive-exclude build *
+recursive-exclude logs *
+recursive-exclude perf_runs *
+recursive-exclude .runtime *
+recursive-exclude tests *
+
+# Include package docs and license
+include README.md
+include LICENSE
+
+# Include runtime data needed by the package
+recursive-include src/jug_lca_buildings/data *.json

@@ -1,3 +1,13 @@
+"""
+Sabu project
+jug_lca_buildings package
+test_lca_carbon_workflow module
+Licensed under the Apache License, Version 2.0.
+Project Designer and Developer: Alireza Adli
+alireza.adli@mail.concordia.ca
+alireza.adli4@gmail.com
+www.demianadli.com
+"""
 from unittest import TestCase
 from unittest.mock import Mock, patch, call
 from src.jug_lca_buildings.lca_carbon_workflow import LCACarbonWorkflow
@@ -105,7 +115,7 @@ class TestLCACarbonWorkflow(TestCase):
     @patch('src.jug_lca_buildings.lca_carbon_workflow.OpeningEmission')
     def test_calculate_opening_emission_variants(
             self, opening_emission_mock, opening_eol_emission_mock):
-        # Shared boundary: two openings of 3.0 m² each;
+        # Shared boundary: two openings of 3.0 m� each;
         # boundary thickness drives EoL workload
         boundary = with_openings(
             make_boundary(thickness=0.15, opaque_area=50.0),
@@ -194,9 +204,9 @@ class TestLCACarbonWorkflow(TestCase):
             self, calc_envelope_emission_mock, calc_opening_emission_mock):
         """
         Building with 2 surfaces:
-        - Surface A: 1 boundary with openings →
+        - Surface A: 1 boundary with openings ?
         both envelope & opening paths hit
-        - Surface B: 1 boundary without openings →
+        - Surface B: 1 boundary without openings ?
         only envelope path
         We return deterministic lists from
         the patched helpers and assert final sums.
@@ -214,7 +224,7 @@ class TestLCACarbonWorkflow(TestCase):
             surfaces=[surface_1, surface_2],
             year_of_construction=2025, function='Residential')
 
-        # Make the catalog lookups consistent with your SUT’s opaque code flow
+        # Make the catalog lookups consistent with your SUT�s opaque code flow
         self.test_lca_wf.nrcan_catalogs.\
             hub_to_nrcan_function.return_value = 'MidriseApartment'
         self.test_lca_wf.nrcan_catalogs.\
@@ -262,7 +272,7 @@ class TestLCACarbonWorkflow(TestCase):
              'MidriseApartment', '2020_3000', '6')
 
         # Helpers invoked expected number of times
-        # two boundaries → envelope twice
+        # two boundaries ? envelope twice
         self.assertEqual(calc_envelope_emission_mock.call_count, 2)
         # only the windowed boundary
         self.assertEqual(calc_opening_emission_mock.call_count, 1)
@@ -295,7 +305,7 @@ class TestLCACarbonWorkflow(TestCase):
         self.test_lca_wf.building_envelope_end_of_life_emission = [10.0, 40.0]
         self.test_lca_wf.building_component_end_of_life_emission = [30.0, 60.0]
 
-        # Expected mapping from dict keys → source lists
+        # Expected mapping from dict keys ? source lists
         expected_map = {
             'opening_embodied_emissions':
                 self.test_lca_wf.building_opening_emission,

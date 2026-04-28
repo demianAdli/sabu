@@ -1,5 +1,5 @@
 """
-JUGS project
+Sabu project
 jug_lca_buildings package
 lca_end_of_life_carbon module
 Machine emission of different methods can be a default argument, because,
@@ -11,8 +11,12 @@ a conditional will decide to use which value. The conditional will be defined
 in the setters.
 For next phases, we can use a Machine object to find the corresponding
 emission.
-Project developer: Alireza Adli alireza.adli4@gmail.com
+Project Designer and Developer: Alireza Adli
 Theoritical Support for LCA emissions: Mohammad Reza Seyedabadi
+Licensed under the Apache License, Version 2.0.
+alireza.adli@mail.concordia.ca
+alireza.adli4@gmail.com
+www.demianadli.com
 """
 
 

@@ -1,10 +1,14 @@
 """
-JUGS project
+Sabu project
 jug_ee project
 jug_ee package
 envelope_emission module
-Project developer: Alireza Adli alireza.adli4@gmail.com
+Project Designer and Developer: Alireza Adli
 Theoritical Support for LCA emissions: Mohammad Reza Seyedabadi
+Licensed under the Apache License, Version 2.0.
+alireza.adli@mail.concordia.ca
+alireza.adli4@gmail.com
+www.demianadli.com
 """
 
 

@@ -1,7 +1,14 @@
 """
+Sabu project
+jug_lca_buildings package
 schemas module
 Defines the schemas to post on emissions.py
-Developer: Alireza Adli alireza.adli4@gmail.com
+Project Designer and Developer: Alireza Adli
+Licensed under the Apache License, Version 2.0.
+Project developer: Alireza Adli
+alireza.adli@mail.concordia.ca
+alireza.adli4@gmail.com
+www.demianadli.com
 """
 from marshmallow import Schema, fields
 

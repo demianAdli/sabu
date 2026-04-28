@@ -1,11 +1,10 @@
 """
-JUGS project
+Sabu project
 jug_lca_buildings package
 lca_carbon_workflow module
 Currently calculates Embodied and End-of-Life
 Returns the summarize of envelope and energy systems
-SPDX - License - Identifier: LGPL - 3.0 - or -later
-Copyright © 2024 Concordia CERC group
+Licensed under the Apache License, Version 2.0.
 Project Designer and Developer: Alireza Adli
 alireza.adli@mail.concordia.ca
 alireza.adli4@gmail.com
@@ -245,12 +244,12 @@ class LCACarbonWorkflow:
           layer_material['embodied_carbon'],
           layer.thickness, 
           boundary.opaque_area,
-          layer.density).calculate_envelope_emission())
+          layer.density/10).calculate_envelope_emission())
 
         boundary_workload = \
             boundary.opaque_area * \
             layer.thickness * \
-            layer.density
+            (layer.density/10)
         layer_end_of_life_emission.append(EndOfLifeEmission(
           layer_material['recycling_ratio'],
           layer_material['onsite_recycling_ratio'],
