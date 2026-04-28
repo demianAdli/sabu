@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.1] - 2026-04-28
+
+### Added
+- Added the Docker image on Docker Hub to use the package
+
 ## [0.1.0] - 2026-04-28
 
 ### Added

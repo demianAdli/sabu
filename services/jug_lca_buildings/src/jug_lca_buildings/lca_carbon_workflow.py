@@ -244,12 +244,12 @@ class LCACarbonWorkflow:
           layer_material['embodied_carbon'],
           layer.thickness, 
           boundary.opaque_area,
-          layer.density/10).calculate_envelope_emission())
+          layer.density/100).calculate_envelope_emission())
 
         boundary_workload = \
             boundary.opaque_area * \
             layer.thickness * \
-            (layer.density/10)
+            (layer.density/100)
         layer_end_of_life_emission.append(EndOfLifeEmission(
           layer_material['recycling_ratio'],
           layer_material['onsite_recycling_ratio'],

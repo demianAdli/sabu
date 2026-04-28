@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jug_lca_buildings"
-version = "0.1.0"
+version = "0.1.1"
 description = "Embodied and end-of-life estimator service."
 authors = [
   { name = "Alireza Adli" }

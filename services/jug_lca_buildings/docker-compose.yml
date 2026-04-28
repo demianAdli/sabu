@@ -1,6 +1,12 @@
 services:
   jug_lca_buildings:
-    image: demianadli/jug_lca_buildings:0.1.0
+    image: demianadli/jug_lca_buildings:0.1.1
+    build:
+      context: ../..
+      dockerfile: services/jug_lca_buildings/docker/Dockerfile
+      args:
+        JUG_LCA_BUILDINGS_VERSION: ${JUG_LCA_BUILDINGS_VERSION:-latest}
+        SABU_CHASSIS_VERSION: ${SABU_CHASSIS_VERSION:-latest}
     container_name: jug_lca_buildings
     ports:
       - "8080:5000"

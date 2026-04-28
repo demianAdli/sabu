@@ -6,13 +6,24 @@ ENV PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
 
-# Install the published package only, so the image does not depend on the local
-# checkout at runtime.
-ARG JUG_LCA_BUILDINGS_VERSION=0.1.0
-RUN python -m pip install --upgrade pip \
-    && python -m pip install \
-        "jug_lca_buildings==${JUG_LCA_BUILDINGS_VERSION}" \
-        "sabu-chassis==0.1.0" \
+# Install published packages from PyPI only, so the image does not depend on
+# the local checkout at runtime. Leave version args empty to install the latest
+# available PyPI releases, or pass build args to pin exact versions.
+ARG JUG_LCA_BUILDINGS_VERSION=latest
+ARG SABU_CHASSIS_VERSION=latest
+RUN set -eux; \
+    python -m pip install --upgrade pip; \
+    jug_lca_buildings_spec="jug_lca_buildings"; \
+    sabu_chassis_spec="sabu-chassis"; \
+    if [ "${JUG_LCA_BUILDINGS_VERSION}" != "latest" ]; then \
+        jug_lca_buildings_spec="jug_lca_buildings==${JUG_LCA_BUILDINGS_VERSION}"; \
+    fi; \
+    if [ "${SABU_CHASSIS_VERSION}" != "latest" ]; then \
+        sabu_chassis_spec="sabu-chassis==${SABU_CHASSIS_VERSION}"; \
+    fi; \
+    python -m pip install --upgrade \
+        "${jug_lca_buildings_spec}" \
+        "${sabu_chassis_spec}" \
         gunicorn
 
 COPY services/jug_lca_buildings/app.py /app/app.py
