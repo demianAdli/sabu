@@ -14,7 +14,7 @@ Documentation: [sabu.demianadli.com](https://sabu.demianadli.com)
 - [Sabu](#sabu)
   - [Services](#services)
   - [Shared Libraries](#shared-libraries)
-  - [Development and Collaboration](#development-and-collaboration)
+  - [Ownership and Repository Status](#ownership-and-repository-status)
 
 ---
 
@@ -46,9 +46,10 @@ Unlike services, they do not communicate via APIs and are not deployed independe
 
 ---
 
-## Development and Collaboration
+## Ownership and Repository Status
 
-The project’s **business-value components** have been developed in collaboration with **domain experts**, who are cited in the corresponding repositories.  
-The **design and development** of the overall project have been led by **Alireza Adli**.
+**Sabu** is designed, developed, and maintained by **Alireza Adli**.
 
-A mirrored version of this project is hosted on the **Next-Generation Cities Institute (NGCI)** version-control platform, **Gitea**, at Concordia University.
+This GitHub repository is the **canonical repository for Sabu**.
+
+Public availability of this repository does not grant permission to reproduce, redistribute, or mirror **Sabu**. Any complete or substantially complete mirror or redistribution of the Sabu framework requires explicit written permission from **Alireza Adli**.
