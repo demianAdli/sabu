@@ -3,6 +3,10 @@ CityGISOO
 geopackage_feature_processor module
 
 Python-first feature and table operations for GeoPackage vector layers.
+Project Developer: Alireza Adli
+alireza.adli@mail.concordia.ca
+alireza.adli4@gmail.com
+www.demianadli.com
 """
 
 import os
