@@ -14,14 +14,11 @@ Update considerations:
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from enum import Enum
 from functools import cached_property
 from importlib.resources import as_file, files
-from os import PathLike
 from pathlib import Path
-from typing import Any
 
 import pandas as pd
 import geopandas as gpd
@@ -34,6 +31,11 @@ from jug_gis_validation.errors import (
   GISValidationCalculationError,
   GISValidationDataContractError,
   GISValidationInputError,
+)
+from .buildings_input import (
+  load_buildings_set,
+  geojson_text_to_geodataframe,
+  geojson_to_geodataframe,
 )
 from .query_census_data_csv import QueryCensusDataCSV
 from .district_geojson_analysis import DistrictGeoJSONAnalysis
@@ -245,95 +247,10 @@ class ValidateGISOO:
       self.height_proxy_area_fallback_key,
       self.height_proxy_area_fallback_value)
 
-  @staticmethod
-  def _load_buildings_set(buildings_set) -> tuple[gpd.GeoDataFrame, str]:
-    if isinstance(buildings_set, gpd.GeoDataFrame):
-      return buildings_set.copy(), 'geodataframe'
-
-    if isinstance(buildings_set, dict):
-      return ValidateGISOO._geojson_to_geodataframe(
-        buildings_set), 'geojson-dict'
-
-    if isinstance(buildings_set, list):
-      return ValidateGISOO._geojson_to_geodataframe(
-        buildings_set), 'feature-list'
-
-    if hasattr(buildings_set, 'read'):
-      try:
-        raw_content = buildings_set.read()
-      except Exception as exc:
-        raise GISValidationInputError(
-          'Unable to read buildings_set file-like object.') from exc
-      return (
-        ValidateGISOO._geojson_text_to_geodataframe(raw_content),
-        'file-like')
-
-    if isinstance(buildings_set, (str, PathLike)):
-      if isinstance(buildings_set, str):
-        candidate_text = buildings_set.strip()
-        if candidate_text.startswith(('{', '[')):
-          return (
-            ValidateGISOO._geojson_text_to_geodataframe(candidate_text),
-            'geojson-string')
-
-      path = Path(buildings_set).expanduser()
-      if not path.exists():
-        raise GISValidationInputError(
-          f'buildings_set path does not exist: {path}')
-
-      try:
-        return gpd.read_file(path), f'path:{path}'
-      except Exception as exc:
-        raise GISValidationInputError(
-          f'Unable to read buildings_set GeoJSON file: {path}') from exc
-
-    raise GISValidationInputError(
-      'buildings_set must be a GeoDataFrame, GeoJSON dict/string, feature '
-      'list, file-like object, or path to a GeoJSON file.')
-
-  @staticmethod
-  def _geojson_text_to_geodataframe(raw_content) -> gpd.GeoDataFrame:
-    if isinstance(raw_content, bytes):
-      raw_content = raw_content.decode('utf-8')
-
-    if not isinstance(raw_content, str):
-      raise GISValidationInputError(
-        'GeoJSON file-like content must be text or bytes.')
-
-    try:
-      geojson_obj = json.loads(raw_content)
-    except json.JSONDecodeError as exc:
-      raise GISValidationInputError(
-        'buildings_set content is not valid GeoJSON JSON text.') from exc
-
-    return ValidateGISOO._geojson_to_geodataframe(geojson_obj)
-
-  @staticmethod
-  def _geojson_to_geodataframe(geojson_obj: Any) -> gpd.GeoDataFrame:
-    if isinstance(geojson_obj, dict):
-      geojson_type = geojson_obj.get('type')
-      if geojson_type == 'FeatureCollection':
-        features = geojson_obj.get('features')
-      elif geojson_type == 'Feature':
-        features = [geojson_obj]
-      else:
-        raise GISValidationInputError(
-          'GeoJSON object must be a FeatureCollection or Feature.')
-    elif isinstance(geojson_obj, list):
-      features = geojson_obj
-    else:
-      raise GISValidationInputError(
-        'GeoJSON content must be a FeatureCollection, Feature, or feature list.')
-
-    if not isinstance(features, list):
-      raise GISValidationInputError('GeoJSON features must be a list.')
-
-    try:
-      return gpd.GeoDataFrame.from_features(features)
-    except Exception as exc:
-      raise GISValidationInputError(
-        'Unable to convert buildings_set GeoJSON features to a GeoDataFrame.'
-      ) from exc
+  # Compatibility aliases for existing callers of the loading helpers.
+  _load_buildings_set = staticmethod(load_buildings_set)
+  _geojson_text_to_geodataframe = staticmethod(geojson_text_to_geodataframe)
+  _geojson_to_geodataframe = staticmethod(geojson_to_geodataframe)
 
   @staticmethod
   def _load_census_data_csv(census_data_csv) -> tuple[pd.DataFrame, str]:

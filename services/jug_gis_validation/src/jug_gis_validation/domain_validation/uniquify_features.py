@@ -55,6 +55,7 @@ class _GroupSelection:
     best_position: int
     best_area: float | None
     has_invalid_area: bool
+    maximum_count: int = 1
 
 
 def _is_missing_identifier(value) -> bool:
@@ -90,6 +91,35 @@ def uniquify_features(
     all retained. Equal greatest areas keep the earliest input feature. The
     input frame is never mutated and retained features preserve input order.
     """
+    filtered, stats, _ = _select_features(
+        buildings_set,
+        unique_attribute_key=unique_attribute_key,
+        area_key=area_key,
+        include_trace=False)
+    return filtered, stats
+
+
+def uniquify_features_with_trace(
+        buildings_set: gpd.GeoDataFrame,
+        *,
+        unique_attribute_key: str,
+        area_key: str,
+) -> tuple[gpd.GeoDataFrame, FeatureUniquificationStats, list[dict[str, Any]]]:
+    """Apply the same selection policy and explain every input record."""
+    return _select_features(
+        buildings_set,
+        unique_attribute_key=unique_attribute_key,
+        area_key=area_key,
+        include_trace=True)
+
+
+def _select_features(
+        buildings_set,
+        *,
+        unique_attribute_key,
+        area_key,
+        include_trace,
+):
     missing_columns = [
         key for key in (unique_attribute_key, area_key)
         if key not in buildings_set.columns
@@ -134,6 +164,9 @@ def uniquify_features(
         elif selection.best_area is None or numeric_area > selection.best_area:
             selection.best_area = numeric_area
             selection.best_position = position
+            selection.maximum_count = 1
+        elif numeric_area == selection.best_area:
+            selection.maximum_count += 1
 
     invalid_duplicate_values = [
         unique_value
@@ -171,4 +204,38 @@ def uniquify_features(
         removed_features=input_features - retained_features,
         duplicate_groups=duplicate_groups,
     )
-    return filtered, stats
+    records = []
+    if include_trace:
+        retained_indexes = {
+            position: index for index, position in enumerate(retained_positions)
+        }
+        missing_position_set = set(missing_positions)
+        for position, (identifier, area) in enumerate(
+                zip(unique_values, area_values)):
+            if position in missing_position_set:
+                retained_position = position
+                reason = 'missing_identifier'
+            else:
+                selection = groups[identifier]
+                retained_position = selection.best_position
+                if selection.count == 1:
+                    reason = 'unique_identifier'
+                elif position == retained_position:
+                    reason = (
+                        'earliest_maximum_area'
+                        if selection.maximum_count > 1 else 'largest_area')
+                elif _numeric_area(area) == selection.best_area:
+                    reason = 'later_tied_maximum'
+                else:
+                    reason = 'smaller_area'
+            records.append({
+                'record_ref': f'record:{position}',
+                'input_position': position,
+                'identifier': identifier,
+                'area': area,
+                'status': 'retained' if retained_mask[position] else 'removed',
+                'retained_record_ref': f'record:{retained_position}',
+                'retained_feature_index': retained_indexes[retained_position],
+                'reason': reason,
+            })
+    return filtered, stats, records

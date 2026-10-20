@@ -118,3 +118,34 @@ class GISValidationResultSchema(Schema):
     height_proxy_included = fields.Boolean(required=True)
     height_proxy_area_key = fields.String(required=True, allow_none=True)
     height_proxy_area_resolution = fields.Dict(required=True, allow_none=True)
+
+
+class GISUniquificationRequestSchema(Schema):
+    """Standalone operation: unknown fields, including validation options, fail."""
+
+    buildings_set = fields.Raw()
+    buildings_set_path = fields.String(validate=validate.Regexp(r'(?s).*\S'))
+    unique_attribute_key = fields.String(
+        required=True, validate=validate.Regexp(r'(?s).*\S'))
+    area_key = fields.String(
+        load_default='area', validate=validate.Regexp(r'(?s).*\S'))
+
+    @validates_schema
+    def validate_buildings_input(self, data, **kwargs):
+        if ('buildings_set' in data) == ('buildings_set_path' in data):
+            raise ValidationError(
+                'Provide exactly one of buildings_set or buildings_set_path.')
+        if 'buildings_set' in data:
+            content = data['buildings_set']
+            if not isinstance(content, dict) or content.get('type') != 'FeatureCollection':
+                raise ValidationError(
+                    'buildings_set must be a GeoJSON FeatureCollection.',
+                    field_name='buildings_set')
+
+
+class GISUniquificationResultSchema(Schema):
+    """Complete result, including positional mappings for removed records."""
+
+    uniquification = fields.Dict(required=True)
+    retained_geojson = fields.Dict(required=True)
+    records = fields.List(fields.Dict(), required=True)

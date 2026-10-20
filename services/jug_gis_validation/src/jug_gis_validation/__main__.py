@@ -9,6 +9,7 @@ from pathlib import Path
 from sabu_chassis.logging import get_logger
 
 from .application import (
+    GISUniquificationApplicationService,
     AreaCalculationMode,
     GISValidationApplicationService,
     GISValidationOutputMode,
@@ -35,7 +36,9 @@ logger = get_logger(__name__)
 
 def _build_parser():
     parser = argparse.ArgumentParser(
-        description='Run a jug_gis_validation workflow directly.')
+        description=(
+            'Run a jug_gis_validation workflow directly. '
+            'Use "uniquify --help" for standalone uniquification.'))
     parser.add_argument(
         '--buildings-set',
         required=True,
@@ -182,8 +185,50 @@ def _load_census_avg_area(raw_value):
     return parsed
 
 
+def _uniquify_main(argv):
+    parser = argparse.ArgumentParser(
+        prog='python -m jug_gis_validation uniquify',
+        description='Uniquify features without census processing or comparisons.')
+    parser.add_argument('--buildings-set', required=True,
+                        help='Input GeoJSON file path.')
+    parser.add_argument('--unique-attribute-key', required=True,
+                        help='Property identifying duplicate groups.')
+    parser.add_argument('--area-key', default='area',
+                        help='Property used to rank duplicates (default: area).')
+    parser.add_argument('--output-path',
+                        help='Write the complete JSON result here instead of stdout.')
+    args = parser.parse_args(argv)
+    try:
+        source_path = Path(args.buildings_set).expanduser().resolve()
+        output_path = (
+            Path(args.output_path).expanduser().resolve()
+            if args.output_path else None)
+        if output_path is not None and (
+                source_path == output_path
+                or (output_path.exists() and source_path.exists()
+                    and source_path.samefile(output_path))):
+            raise ValueError('--output-path must not overwrite the input file.')
+        result = GISUniquificationApplicationService.run_uniquification(
+            args.buildings_set,
+            unique_attribute_key=args.unique_attribute_key,
+            area_key=args.area_key)
+        serialized = json.dumps(result.as_dict(), allow_nan=False, indent=2)
+        if output_path is None:
+            print(serialized)
+        else:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(serialized + '\n', encoding='utf-8')
+    except Exception as exc:
+        print(f'Uniquification failed: {exc}', file=sys.stderr)
+        return 1
+    return 0
+
+
 def main(argv=None):
     configure_service_logging('gis_validation-direct')
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv and argv[0] == 'uniquify':
+        return _uniquify_main(argv[1:])
     args = _build_parser().parse_args(argv)
 
     try:
