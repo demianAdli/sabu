@@ -36,6 +36,28 @@ For a basic test request, you need a GeoJSON `FeatureCollection` where each feat
 - `properties.height`
 - `properties.year_of_construction`
 
+`FeatureCollection.type` and `FeatureCollection.features`, feature `type`,
+`id`, `geometry`, and `properties`, geometry `type` and `coordinates`, and all
+five building properties above are required and cannot be null. Marshmallow
+validates their declared types and normalizes numeric values (including numeric
+strings). Coordinates use three nested lists of numbers. Validation does not
+add geometry type, coordinate length, or domain value checks.
+
+Additional fields at the FeatureCollection, Feature, Geometry, and Properties
+levels are accepted and excluded from computation input. The original object
+or file is preserved. One invalid feature rejects the entire batch; neither
+endpoint silently removes invalid features. API schema failures return `422`
+with nested field details in `errors` (JSON request-parser errors are nested
+under `errors.json`). Invalid JSON uploads continue to return `400`.
+
+Direct calls to `EmissionsApplicationService.compute_emissions(request_city)`
+apply the same Marshmallow rules and raise `marshmallow.ValidationError` with
+field details in `.messages`. Supported inputs remain a GeoJSON object, JSON
+text, or a string file path. Relative file paths retain the fallback to bundled
+service data. Validation happens before cache lookup. Computation, cached request
+artifacts, and application CSV reports use normalized input, so ignored metadata
+and equivalent numeric strings do not change the computation cache identity.
+
 The service also depends on bundled reference data used by the workflow:
 
 - [`src/jug_lca_buildings/data/nrcan_archetypes.json`](src/jug_lca_buildings/data/nrcan_archetypes.json)

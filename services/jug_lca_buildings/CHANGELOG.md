@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+- Exclude unknown GeoJSON fields at FeatureCollection, Feature, Geometry, and Properties levels without modifying the original input.
+- Apply shared Marshmallow validation and normalization to direct application calls and both emissions API endpoints before cache lookup; reject invalid batches with field details and use normalized input for computation, caching, and reporting.
+
 ## [0.1.1] - 2026-04-28
 
 ### Added
