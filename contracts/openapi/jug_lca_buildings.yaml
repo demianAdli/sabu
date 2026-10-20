@@ -11,6 +11,8 @@ info:
     and excluded from normalized computation, cache, and report input without modifying the source.
     Required fields cannot be null. Any invalid feature rejects the entire batch with 422 field errors.
     Numeric strings are normalized by Marshmallow to the declared numeric types before cache lookup.
+    Polygon and MultiPolygon geometries, including mixed collections, retain their parts and holes.
+    Coordinates must already be WGS84 longitude/latitude; CRS metadata does not trigger reprojection.
 servers:
   - url: http://localhost:5000
     description: Local development
@@ -98,7 +100,7 @@ paths:
                 geojson_file:
                   type: string
                   format: binary
-                  description: GeoJSON file containing a FeatureCollection of building footprints and properties
+                  description: GeoJSON FeatureCollection of Polygon and/or MultiPolygon building footprints and properties, using WGS84 longitude/latitude coordinates.
       responses:
         '200':
           description: CSV report generated successfully (when `export=csv`). All emission values in the CSV are in kgCO2e.
@@ -164,23 +166,51 @@ components:
         properties:
           $ref: '#/components/schemas/BuildingProperties'
     Geometry:
+      description: Polygon or MultiPolygon; coordinate nesting must match the declared type. Parts and holes are preserved. No ring-length, closure, or topology validation or geometry repair is performed.
+      oneOf:
+        - $ref: '#/components/schemas/PolygonGeometry'
+        - $ref: '#/components/schemas/MultiPolygonGeometry'
+      discriminator:
+        propertyName: type
+        mapping:
+          Polygon: '#/components/schemas/PolygonGeometry'
+          MultiPolygon: '#/components/schemas/MultiPolygonGeometry'
+    PolygonGeometry:
       type: object
       additionalProperties: true
-      description: Additional metadata is accepted and excluded. Schema validation adds no geometry type or coordinate length rules.
+      description: Additional metadata is accepted and excluded.
       required: [type, coordinates]
       properties:
         type:
           type: string
+          enum: [Polygon]
           example: Polygon
         coordinates:
+          $ref: '#/components/schemas/PolygonCoordinates'
+    MultiPolygonGeometry:
+      type: object
+      additionalProperties: true
+      description: One building feature containing multiple polygon parts, each retaining its rings. Additional metadata is accepted and excluded.
+      required: [type, coordinates]
+      properties:
+        type:
+          type: string
+          enum: [MultiPolygon]
+          example: MultiPolygon
+        coordinates:
           type: array
-          description: Three nested lists of numbers, typically Polygon coordinates as [ring][point][lon/lat]. Numeric strings are normalized to numbers.
+          description: Four nested lists of numbers, structured as [polygon][ring][point][number].
           items:
-            type: array
-            items:
-              type: array
-              items:
-                type: number
+            $ref: '#/components/schemas/PolygonCoordinates'
+    PolygonCoordinates:
+      type: array
+      description: Three nested lists of numbers, structured as [ring][point][number]. Numeric strings are normalized to numbers. WGS84 longitude/latitude is required for computation.
+      items:
+        type: array
+        items:
+          type: array
+          items:
+            type: number
     BuildingProperties:
       type: object
       additionalProperties: true

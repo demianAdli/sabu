@@ -1,0 +1,30 @@
+{
+  "type": "FeatureCollection",
+  "name": "Multipart building with courtyard",
+  "features": [
+    {
+      "type": "Feature",
+      "id": 1,
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [[-73.57, 45.5], [-73.569, 45.5], [-73.569, 45.501], [-73.57, 45.501], [-73.57, 45.5]],
+            [[-73.5698, 45.5002], [-73.5698, 45.5004], [-73.5696, 45.5004], [-73.5696, 45.5002], [-73.5698, 45.5002]]
+          ],
+          [
+            [[-73.568, 45.5], [-73.567, 45.5], [-73.567, 45.501], [-73.568, 45.501], [-73.568, 45.5]]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Multipart Building",
+        "address": "123 Test St",
+        "function": "1000",
+        "height": 9,
+        "year_of_construction": 1986,
+        "source": "Example metadata excluded from computation"
+      }
+    }
+  ]
+}

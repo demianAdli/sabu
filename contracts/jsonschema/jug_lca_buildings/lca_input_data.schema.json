@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "contracts/jsonschema/jug_lca_buildings/lca_input_data.schema.json",
   "title": "JUG LCA Buildings Input GeoJSON",
-  "description": "GeoJSON input shared by both emissions endpoints and direct application calls. Unknown fields at all four object levels are accepted and excluded without modifying the source. Any invalid feature rejects the entire batch before cache lookup. Declared numeric types describe normalized values; Marshmallow also accepts numeric strings and coerces numeric values. No additional geometry type, coordinate length, or domain value checks are applied by input validation.",
+  "description": "Polygon/MultiPolygon GeoJSON input shared by both emissions endpoints and direct application calls. Mixed collections are accepted. Unknown fields at all four object levels are accepted and excluded without modifying the source. Any invalid feature rejects the entire batch before cache lookup. Declared numeric types describe normalized values; Marshmallow also accepts numeric strings and coerces numeric values. No additional ring-length, closure, topology, or domain value checks are applied. Coordinates must already be WGS84 longitude/latitude; no CRS conversion is performed.",
   "type": "object",
   "required": ["type", "features"],
   "additionalProperties": true,
@@ -36,25 +36,49 @@
       }
     },
     "geometry": {
+      "oneOf": [
+        { "$ref": "#/$defs/polygonGeometry" },
+        { "$ref": "#/$defs/multiPolygonGeometry" }
+      ]
+    },
+    "polygonGeometry": {
       "type": "object",
       "required": ["type", "coordinates"],
       "additionalProperties": true,
       "properties": {
         "type": {
-          "type": "string"
+          "type": "string",
+          "const": "Polygon"
+        },
+        "coordinates": {
+          "$ref": "#/$defs/polygonCoordinates"
+        }
+      }
+    },
+    "multiPolygonGeometry": {
+      "type": "object",
+      "required": ["type", "coordinates"],
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "MultiPolygon"
         },
         "coordinates": {
           "type": "array",
-          "description": "Three nested lists of numbers, typically Polygon coordinates structured as [ring][point][lon, lat].",
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "array",
-              "items": {
-                "type": "number"
-              }
-            }
-          }
+          "description": "Polygon parts, each retaining its exterior ring and interior holes.",
+          "items": { "$ref": "#/$defs/polygonCoordinates" }
+        }
+      }
+    },
+    "polygonCoordinates": {
+      "type": "array",
+      "description": "Three nested lists of numbers: [ring][point][number].",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "array",
+          "items": { "type": "number" }
         }
       }
     },

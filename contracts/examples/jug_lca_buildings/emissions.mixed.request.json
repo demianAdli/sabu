@@ -1,0 +1,44 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": 1,
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [[-73.57, 45.5], [-73.569, 45.5], [-73.569, 45.501], [-73.57, 45.501], [-73.57, 45.5]]
+        ]
+      },
+      "properties": {
+        "name": "Polygon Building",
+        "address": "123 Test St",
+        "function": "1000",
+        "height": 9,
+        "year_of_construction": 1986
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 2,
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [[-73.568, 45.5], [-73.567, 45.5], [-73.567, 45.501], [-73.568, 45.501], [-73.568, 45.5]]
+          ],
+          [
+            [[-73.566, 45.5], [-73.565, 45.5], [-73.565, 45.501], [-73.566, 45.501], [-73.566, 45.5]]
+          ]
+        ]
+      },
+      "properties": {
+        "name": "Multipart Building",
+        "address": "125 Test St",
+        "function": "1000",
+        "height": 12,
+        "year_of_construction": 1995
+      }
+    }
+  ]
+}
