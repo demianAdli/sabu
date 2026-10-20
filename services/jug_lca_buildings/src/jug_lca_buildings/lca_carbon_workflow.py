@@ -15,11 +15,13 @@ import os
 from pathlib import Path
 from time import perf_counter
 
-from hub.imports.geometry_factory import GeometryFactory
 from hub.imports.construction_factory import ConstructionFactory
 from hub.helpers.dictionaries import Dictionaries
 
 from .life_cycle_assessment.input_geojson_content import InputGeoJsonContent
+from .life_cycle_assessment.geojson_geometry import (
+    BuildingGeometryFactory as GeometryFactory,
+)
 from .life_cycle_assessment.access_nrcan_catalogue import AccessNrcanCatalog
 from .life_cycle_assessment.opening_emission import OpeningEmission
 from .life_cycle_assessment.envelope_emission import EnvelopeEmission
