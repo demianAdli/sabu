@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from ..lca_carbon_workflow import LCACarbonWorkflow
 from ..reporting import EmissionsReportExporter
 from ..storage import EmissionsArtifactStore
+from .input_validation import normalize_city_input
 
 
 @dataclass(frozen=True)
@@ -31,6 +32,12 @@ class EmissionsApplicationService:
 
     @classmethod
     def compute_emissions(cls, request_city):
+        """Validate all features before cache access or workflow execution.
+
+        Accept a GeoJSON object, JSON text, or string file path. Invalid fields
+        raise marshmallow.ValidationError with details in ``messages``.
+        """
+        request_city = normalize_city_input(request_city)
         store = EmissionsArtifactStore()
         request_hash = store.build_request_hash(request_city)
         cached_data = store.load_emissions_data(request_hash)
@@ -55,6 +62,7 @@ class EmissionsApplicationService:
 
     @classmethod
     def build_csv_report(cls, request_city, computation_result):
+        request_city = normalize_city_input(request_city)
         store = EmissionsArtifactStore()
         csv_text = store.load_csv_report(computation_result.request_hash)
         csv_cache_hit = csv_text is not None

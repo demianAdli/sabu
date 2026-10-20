@@ -10,11 +10,14 @@ alireza.adli@mail.concordia.ca
 alireza.adli4@gmail.com
 www.demianadli.com
 """
-from marshmallow import Schema, fields
+from marshmallow import EXCLUDE, Schema, fields
 
 
 class GeometrySchema(Schema):
     """Schema for the geometry of a feature."""
+    class Meta:
+        unknown = EXCLUDE
+
     type = fields.String(required=True)
     coordinates = fields.List(
         fields.List(fields.List(fields.Float())), required=True)
@@ -22,6 +25,9 @@ class GeometrySchema(Schema):
 
 class PropertiesSchema(Schema):
     """Schema for the properties of a feature."""
+    class Meta:
+        unknown = EXCLUDE
+
     name = fields.String(required=True)
     address = fields.String(required=True)
     function = fields.String(required=True)
@@ -31,6 +37,9 @@ class PropertiesSchema(Schema):
 
 class FeatureSchema(Schema):
     """Schema for a GeoJSON feature."""
+    class Meta:
+        unknown = EXCLUDE
+
     type = fields.String(required=True)
     geometry = fields.Nested(GeometrySchema, required=True)
     id = fields.Integer(required=True)
@@ -39,6 +48,9 @@ class FeatureSchema(Schema):
 
 class LCAInputDataSchema(Schema):
     """Define variables that come from user input."""
+    class Meta:
+        unknown = EXCLUDE
+
     type = fields.String(required=True)
     features = fields.List(fields.Nested(FeatureSchema), required=True)
 

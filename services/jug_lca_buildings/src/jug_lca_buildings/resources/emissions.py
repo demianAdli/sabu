@@ -85,6 +85,9 @@ def _run_emissions_workflow(
             )
         return jsonify(emissions_data), 201
 
+    except ValidationError as err:
+        abort(422, message="Invalid GeoJSON payload", errors=err.messages)
+
     except HTTPException:
         # If something upstream already called abort(...), preserve response.
         raise
@@ -122,20 +125,9 @@ class EmissionsUpload(MethodView):
             request_city = json.load(geojson_file.stream)
         except json.JSONDecodeError:
             abort(400, message="Invalid JSON content in geojson_file")
-        else:
-            try:
-                validated_request_city = LCAInputDataSchema().load(
-                    request_city
-                )
-            except ValidationError as err:
-                abort(
-                    422,
-                    message="Invalid GeoJSON payload",
-                    errors=err.messages,
-                )
-            else:
-                return _run_emissions_workflow(
-                    validated_request_city,
-                    request_received_log='emissions_upload_request_received',
-                    request_failed_log='emissions_upload_request_failed',
-                )
+
+        return _run_emissions_workflow(
+            request_city,
+            request_received_log='emissions_upload_request_received',
+            request_failed_log='emissions_upload_request_failed',
+        )
