@@ -24,6 +24,14 @@ info:
     `mode` and an optional `fsa`. FSA-capable components can also be submitted
     as persistent asynchronous batches for selected or component-configured
     FSAs.
+
+    Successful standardized outputs are registered as immutable GeoJSON copies.
+    Run responses and successful per-FSA results include an artifact ID and an
+    absolute HTTP download URL. Downloading never executes preprocessing.
+    Registrations and copies survive restarts when the artifact directory is
+    persisted; workflow cleanup does not remove them. Copies are retained
+    indefinitely unless deliberately removed by an operator. Existing batch
+    records without registrations expose null artifact fields.
 servers:
   - url: http://localhost:5000
     description: Local Flask development
@@ -89,6 +97,8 @@ paths:
                     fsa: null
                     workflow_output_path: /data/output/saint_malachie_gisoo_with_fsa/saint_malachie_gisoo_with_fsa.shp
                     standardized_output_path: /data/output/saint_malachie_standardized/saint_malachie_standardized.geojson
+                    standardized_artifact_id: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+                    standardized_download_url: http://localhost:5000/artifacts/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/download
                     cleaned_output_paths: []
                 independent:
                   summary: Independent execution response
@@ -98,6 +108,8 @@ paths:
                     fsa: null
                     workflow_output_path: /data/output/saint_malachie_gisoo_with_fsa/saint_malachie_gisoo_with_fsa.shp
                     standardized_output_path: null
+                    standardized_artifact_id: null
+                    standardized_download_url: null
                     cleaned_output_paths: []
                 montrealFsa:
                   summary: Montreal FSA independent execution response
@@ -107,6 +119,8 @@ paths:
                     fsa: H3H
                     workflow_output_path: /data/output/H3H/mtl_fsa_gisoo/mtl_fsa_gisoo.shp
                     standardized_output_path: null
+                    standardized_artifact_id: null
+                    standardized_download_url: null
                     cleaned_output_paths: []
         '400':
           description: Bad request, including invalid component-name values that are not valid Python package names.
@@ -242,6 +256,53 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /artifacts/{artifact_id}/download:
+    get:
+      summary: Download a registered standardized GeoJSON
+      operationId: downloadGISArtifact
+      tags: [GIS Components]
+      description: |
+        Serves the stored immutable copy without executing a workflow or adapter.
+        Only registered IDs are accepted; filesystem paths cannot be supplied.
+        Reruns receive new IDs and cannot replace earlier artifacts.
+      parameters:
+        - in: path
+          name: artifact_id
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9a-f]{32}$'
+      responses:
+        '200':
+          description: Registered GeoJSON attachment.
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              description: Attachment with an artifact-ID-based .geojson filename.
+          content:
+            application/geo+json:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Unknown or malformed artifact ID, including unregistered files.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '410':
+          description: Registered copy is missing, truncated, or resolves outside its artifact location.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Artifact registry or unexpected file read failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   parameters:
     ComponentName:
@@ -309,6 +370,8 @@ components:
         - fsa
         - workflow_output_path
         - standardized_output_path
+        - standardized_artifact_id
+        - standardized_download_url
         - cleaned_output_paths
       additionalProperties: false
       properties:
@@ -334,6 +397,16 @@ components:
             GeoJSON path produced by the contract adapter in `standardize`
             mode. Null for `independent` mode.
           example: /data/output/saint_malachie_standardized/saint_malachie_standardized.geojson
+        standardized_artifact_id:
+          type: string
+          nullable: true
+          pattern: '^[0-9a-f]{32}$'
+          description: Immutable registered GeoJSON ID; null in independent mode.
+        standardized_download_url:
+          type: string
+          format: uri
+          nullable: true
+          description: Absolute HTTP URL for the registered copy; null in independent mode.
         cleaned_output_paths:
           type: array
           items:
@@ -390,6 +463,8 @@ components:
         - succeeded
         - workflow_output_path
         - standardized_output_path
+        - standardized_artifact_id
+        - standardized_download_url
         - cleaned_output_paths
         - error
         - elapsed_seconds
@@ -406,6 +481,16 @@ components:
         standardized_output_path:
           type: string
           nullable: true
+        standardized_artifact_id:
+          type: string
+          nullable: true
+          pattern: '^[0-9a-f]{32}$'
+          description: Null for failures, independent runs, and legacy unregistered results.
+        standardized_download_url:
+          type: string
+          format: uri
+          nullable: true
+          description: Absolute HTTP URL for this FSA's registered copy, or null.
         cleaned_output_paths:
           type: array
           items:

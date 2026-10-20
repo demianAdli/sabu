@@ -4,5 +4,7 @@
   "fsa": "H3H",
   "workflow_output_path": "/data/output/H3H/mtl_fsa_gisoo/mtl_fsa_gisoo.shp",
   "standardized_output_path": null,
-  "cleaned_output_paths": []
+  "cleaned_output_paths": [],
+  "standardized_artifact_id": null,
+  "standardized_download_url": null
 }

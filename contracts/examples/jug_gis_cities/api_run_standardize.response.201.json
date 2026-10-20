@@ -4,5 +4,7 @@
   "fsa": null,
   "workflow_output_path": "/data/output/saint_malachie_gisoo_with_fsa/saint_malachie_gisoo_with_fsa.shp",
   "standardized_output_path": "/data/output/saint_malachie_standardized/saint_malachie_standardized.geojson",
-  "cleaned_output_paths": []
+  "cleaned_output_paths": [],
+  "standardized_artifact_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "standardized_download_url": "http://localhost:5000/artifacts/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/download"
 }

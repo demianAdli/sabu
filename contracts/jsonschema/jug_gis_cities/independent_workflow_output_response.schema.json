@@ -10,34 +10,56 @@
     "fsa",
     "workflow_output_path",
     "standardized_output_path",
-    "cleaned_output_paths"
+    "cleaned_output_paths",
+    "standardized_artifact_id",
+    "standardized_download_url"
   ],
   "additionalProperties": false,
   "properties": {
     "component_name": {
       "type": "string",
-      "examples": ["saint_malachie_gisoo"]
+      "examples": [
+        "saint_malachie_gisoo"
+      ]
     },
     "mode": {
       "type": "string",
       "const": "independent"
     },
     "fsa": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "pattern": "^[A-Z][0-9][A-Z]$",
-      "examples": [null, "H3H"]
+      "examples": [
+        null,
+        "H3H"
+      ]
     },
     "workflow_output_path": {
       "type": "string",
-      "examples": ["/data/output/saint_malachie_gisoo_with_fsa/saint_malachie_gisoo_with_fsa.shp"]
+      "examples": [
+        "/data/output/saint_malachie_gisoo_with_fsa/saint_malachie_gisoo_with_fsa.shp"
+      ]
     },
     "standardized_output_path": {
       "type": "null"
     },
     "cleaned_output_paths": {
       "type": "array",
-      "items": {"type": "string"},
-      "examples": [[]]
+      "items": {
+        "type": "string"
+      },
+      "examples": [
+        []
+      ]
+    },
+    "standardized_artifact_id": {
+      "type": "null"
+    },
+    "standardized_download_url": {
+      "type": "null"
     }
   }
 }

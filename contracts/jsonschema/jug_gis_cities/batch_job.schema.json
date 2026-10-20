@@ -5,55 +5,198 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "batch_id", "component_name", "mode", "status", "all_fsas", "fsas",
-    "max_workers", "cleanup_outputs", "keep_outputs", "total_count",
-    "completed_count", "succeeded_count", "failed_count", "results",
-    "error", "created_at", "updated_at", "started_at", "finished_at"
+    "batch_id",
+    "component_name",
+    "mode",
+    "status",
+    "all_fsas",
+    "fsas",
+    "max_workers",
+    "cleanup_outputs",
+    "keep_outputs",
+    "total_count",
+    "completed_count",
+    "succeeded_count",
+    "failed_count",
+    "results",
+    "error",
+    "created_at",
+    "updated_at",
+    "started_at",
+    "finished_at"
   ],
   "properties": {
-    "batch_id": {"type": "string", "minLength": 1},
-    "component_name": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"},
-    "mode": {"type": "string", "enum": ["independent", "standardize"]},
-    "status": {"type": "string", "enum": ["queued", "running", "succeeded", "failed"]},
-    "all_fsas": {"type": "boolean"},
-    "fsas": {
-      "type": ["array", "null"],
-      "items": {"type": "string", "pattern": "^[A-Z][0-9][A-Z]$"}
+    "batch_id": {
+      "type": "string",
+      "minLength": 1
     },
-    "max_workers": {"type": "integer", "minimum": 1},
-    "cleanup_outputs": {"type": "boolean"},
-    "keep_outputs": {"type": ["array", "null"], "items": {"type": "string"}},
-    "total_count": {"type": "integer", "minimum": 0},
-    "completed_count": {"type": "integer", "minimum": 0},
-    "succeeded_count": {"type": "integer", "minimum": 0},
-    "failed_count": {"type": "integer", "minimum": 0},
+    "component_name": {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "independent",
+        "standardize"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "running",
+        "succeeded",
+        "failed"
+      ]
+    },
+    "all_fsas": {
+      "type": "boolean"
+    },
+    "fsas": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Z][0-9][A-Z]$"
+      }
+    },
+    "max_workers": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "cleanup_outputs": {
+      "type": "boolean"
+    },
+    "keep_outputs": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      }
+    },
+    "total_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "completed_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "succeeded_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "failed_count": {
+      "type": "integer",
+      "minimum": 0
+    },
     "results": {
       "type": "array",
-      "items": {"$ref": "#/$defs/fsaResult"}
+      "items": {
+        "$ref": "#/$defs/fsaResult"
+      }
     },
-    "error": {"type": ["string", "null"]},
-    "created_at": {"type": "string", "format": "date-time"},
-    "updated_at": {"type": "string", "format": "date-time"},
-    "started_at": {"type": ["string", "null"], "format": "date-time"},
-    "finished_at": {"type": ["string", "null"], "format": "date-time"}
+    "error": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "started_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "finished_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    }
   },
   "$defs": {
     "fsaResult": {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "fsa", "succeeded", "workflow_output_path",
-        "standardized_output_path", "cleaned_output_paths", "error",
-        "elapsed_seconds"
+        "fsa",
+        "succeeded",
+        "workflow_output_path",
+        "standardized_output_path",
+        "cleaned_output_paths",
+        "error",
+        "elapsed_seconds",
+        "standardized_artifact_id",
+        "standardized_download_url"
       ],
       "properties": {
-        "fsa": {"type": "string", "pattern": "^[A-Z][0-9][A-Z]$"},
-        "succeeded": {"type": "boolean"},
-        "workflow_output_path": {"type": ["string", "null"]},
-        "standardized_output_path": {"type": ["string", "null"]},
-        "cleaned_output_paths": {"type": "array", "items": {"type": "string"}},
-        "error": {"type": ["string", "null"]},
-        "elapsed_seconds": {"type": "number", "minimum": 0}
+        "fsa": {
+          "type": "string",
+          "pattern": "^[A-Z][0-9][A-Z]$"
+        },
+        "succeeded": {
+          "type": "boolean"
+        },
+        "workflow_output_path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "standardized_output_path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "cleaned_output_paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "error": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "elapsed_seconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "standardized_artifact_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{32}$",
+          "description": "Immutable registered standardized GeoJSON ID; null for failed, independent, or legacy batch results."
+        },
+        "standardized_download_url": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri",
+          "description": "Absolute HTTP download URL constructed by the API from the artifact ID."
+        }
       }
     }
   }

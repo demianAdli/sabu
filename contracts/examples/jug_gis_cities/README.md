@@ -9,6 +9,7 @@ The currently implemented HTTP API triggers an installed component by name:
 POST /components/{component_name}/runs
 POST /components/{component_name}/batch-runs
 GET /components/{component_name}/batch-runs/{batch_id}
+GET /artifacts/{artifact_id}/download
 ```
 
 The request body accepts `mode` and, for FSA-capable components, `fsa`:
@@ -20,6 +21,24 @@ The request body accepts `mode` and, for FSA-capable components, `fsa`:
 Batch submission accepts exactly one of selected `fsas` or `all_fsas=true`,
 plus `max_workers`. It returns `202 Accepted`; the status endpoint reports
 persistent progress and ordered per-FSA results.
+
+Successful standardized runs and successful standardized per-FSA results expose
+`standardized_artifact_id` and an absolute `standardized_download_url` in addition
+to the unchanged output paths. Independent runs, failures, and legacy batch
+results without registrations return null artifact fields. Follow the URL to
+download the existing `application/geo+json` attachment without preprocessing or
+shared filesystem access. The GeoJSON content contract is unchanged.
+
+Each registration retains a separate copy under a new ID, so reruns and workflow
+cleanup cannot replace older downloads. SQLite registrations and copies survive
+service restarts when `JUG_GIS_CITIES_ARTIFACT_DIR` is persisted and shared by the
+API and worker. Compose uses `/data/job_store/artifacts` in the existing named
+job-store volume. Copies are retained indefinitely, with no automatic expiry;
+see the service README for storage configuration and operator cleanup guidance.
+Only registered IDs are downloadable; caller-selected filesystem paths and
+unregistered files are not served. Unknown IDs return 404, missing/unavailable
+registered copies return 410, and registry or unexpected read failures return
+500 using the existing JSON error envelope.
 
 Dataset manifests in this folder describe flexible input references for direct,
 Docker, and future API-oriented execution. The current HTTP endpoint does not
@@ -41,6 +60,8 @@ Files
 - `standardized_output.example.geojson`: Example strict standardized GeoJSON output.
 - `error.response.400.invalid_component_name.json`: Example invalid component-name error.
 - `error.response.404.component_not_found.json`: Example component-not-found error.
+- `error.response.404.artifact_not_found.json`: Example unknown artifact error.
+- `error.response.410.artifact_unavailable.json`: Example unavailable registered copy.
 - `error.response.422.invalid_mode.json`: Example validation error for unsupported mode.
 - `error.response.422.component_contract.json`: Example component contract error.
 

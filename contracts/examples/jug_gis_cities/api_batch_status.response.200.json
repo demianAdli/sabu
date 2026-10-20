@@ -4,10 +4,16 @@
   "mode": "standardize",
   "status": "failed",
   "all_fsas": true,
-  "fsas": ["H2X", "H3H"],
+  "fsas": [
+    "H2X",
+    "H3H"
+  ],
   "max_workers": 3,
   "cleanup_outputs": true,
-  "keep_outputs": ["usage_clean", "inter_summary"],
+  "keep_outputs": [
+    "usage_clean",
+    "inter_summary"
+  ],
   "total_count": 2,
   "completed_count": 2,
   "succeeded_count": 1,
@@ -18,9 +24,13 @@
       "succeeded": true,
       "workflow_output_path": "/data/mtl_gisoo_fsa_data/output/H2X/mtl_fsa_gisoo.gpkg",
       "standardized_output_path": "/data/mtl_gisoo_fsa_data/output/H2X/standardized.geojson",
-      "cleaned_output_paths": ["/data/mtl_gisoo_fsa_data/output/H2X/intermediate.gpkg"],
+      "cleaned_output_paths": [
+        "/data/mtl_gisoo_fsa_data/output/H2X/intermediate.gpkg"
+      ],
       "error": null,
-      "elapsed_seconds": 71.25
+      "elapsed_seconds": 71.25,
+      "standardized_artifact_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "standardized_download_url": "http://localhost:5000/artifacts/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/download"
     },
     {
       "fsa": "H3H",
@@ -29,7 +39,9 @@
       "standardized_output_path": null,
       "cleaned_output_paths": [],
       "error": "GisComponentError: GIS city component execution failed",
-      "elapsed_seconds": 12.4
+      "elapsed_seconds": 12.4,
+      "standardized_artifact_id": null,
+      "standardized_download_url": null
     }
   ],
   "error": "One or more FSA runs failed.",
