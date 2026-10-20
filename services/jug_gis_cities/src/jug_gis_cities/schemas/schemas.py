@@ -52,6 +52,10 @@ class GISComponentRunResultSchema(Schema):
     fsa = fields.String(allow_none=True)
     workflow_output_path = fields.String(required=True)
     standardized_output_path = fields.String(allow_none=True)
+    standardized_artifact_id = fields.String(
+        required=True, allow_none=True, validate=validate.Regexp(r'^[0-9a-f]{32}$'))
+    standardized_download_url = fields.Url(
+        required=True, allow_none=True, metadata={'format': 'uri'})
     cleaned_output_paths = fields.List(fields.String(), required=True)
 
 
@@ -106,6 +110,10 @@ class FsaBatchItemResultSchema(Schema):
     succeeded = fields.Boolean(required=True)
     workflow_output_path = fields.String(allow_none=True)
     standardized_output_path = fields.String(allow_none=True)
+    standardized_artifact_id = fields.String(
+        required=True, allow_none=True, validate=validate.Regexp(r'^[0-9a-f]{32}$'))
+    standardized_download_url = fields.Url(
+        required=True, allow_none=True, metadata={'format': 'uri'})
     cleaned_output_paths = fields.List(fields.String(), required=True)
     error = fields.String(allow_none=True)
     elapsed_seconds = fields.Float(required=True)

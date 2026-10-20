@@ -36,6 +36,7 @@ class FsaBatchItemResult:
     error: str | None = None
     elapsed_seconds: float = 0.0
     cleaned_output_paths: tuple[str, ...] = ()
+    standardized_artifact_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -279,6 +280,8 @@ def run_one_fsa(
             result,
             'standardized_output_path',
             None),
+        standardized_artifact_id=getattr(
+            result, 'standardized_artifact_id', None),
         cleaned_output_paths=tuple(getattr(
             result,
             'cleaned_output_paths',

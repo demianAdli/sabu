@@ -24,6 +24,8 @@ from time import perf_counter
 
 from sabu_chassis.logging import get_logger
 
+from .artifacts import ArtifactError, get_artifact_store
+
 
 logger = get_logger(__name__)
 
@@ -134,6 +136,7 @@ class GisComponentRunResult:
     standardized_output_path: str | None = None
     fsa: str | None = None
     cleaned_output_paths: tuple[str, ...] = ()
+    standardized_artifact_id: str | None = None
 
 
 class GisComponentError(RuntimeError):
@@ -226,6 +229,7 @@ class GISCitiesApplicationService:
                 fsa=normalized_fsa)
 
             standardized_output_path = None
+            standardized_artifact_id = None
             if normalized_mode == GisComponentRunMode.STANDARDIZE:
                 contract_adapter_runner = cls._import_component_callable(
                     component_name=normalized_component_name,
@@ -240,6 +244,15 @@ class GISCitiesApplicationService:
                         'non_null_required_fields':
                             normalized_non_null_required_fields,
                     })
+                try:
+                    artifact = get_artifact_store().register(
+                        standardized_output_path,
+                        component_name=normalized_component_name,
+                        fsa=normalized_fsa)
+                except ArtifactError as exc:
+                    raise GisComponentError(
+                        'Failed to register standardized output artifact.') from exc
+                standardized_artifact_id = artifact.artifact_id
 
             cleaned_output_paths = ()
 
@@ -277,6 +290,7 @@ class GISCitiesApplicationService:
             workflow_output_path=workflow_output_path,
             fsa=normalized_fsa,
             standardized_output_path=standardized_output_path,
+            standardized_artifact_id=standardized_artifact_id,
             cleaned_output_paths=cleaned_output_paths)
 
         logger.info(
@@ -383,6 +397,7 @@ class GISCitiesApplicationService:
             mode=worker_result.mode,
             workflow_output_path=worker_result.workflow_output_path,
             standardized_output_path=worker_result.standardized_output_path,
+            standardized_artifact_id=worker_result.standardized_artifact_id,
             fsa=worker_result.fsa,
             cleaned_output_paths=tuple(cleaned_output_paths or ()))
         logger.info(

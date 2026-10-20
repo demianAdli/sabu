@@ -13,7 +13,7 @@ import os
 import uuid
 from contextlib import contextmanager
 
-from flask import current_app
+from flask import current_app, send_file, url_for
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from werkzeug.exceptions import HTTPException
@@ -27,6 +27,12 @@ from ..application import (
     normalize_fsas,
 )
 from ..application.batch_jobs import get_batch_job_store
+from ..application.artifacts import (
+    ArtifactError,
+    ArtifactNotFoundError,
+    ArtifactUnavailableError,
+    get_artifact_store,
+)
 from ..schemas import (
     FsaBatchJobSchema,
     FsaBatchRunRequestSchema,
@@ -45,6 +51,24 @@ blp = Blueprint(
 )
 
 
+def _artifact_response_fields(artifact_id):
+    return {
+        'standardized_artifact_id': artifact_id,
+        'standardized_download_url': (
+            url_for('.GISArtifactDownload', artifact_id=artifact_id,
+                    _external=True) if artifact_id else None),
+    }
+
+
+def _batch_to_response(job):
+    response = job.to_response()
+    response['results'] = [
+        {**item, **_artifact_response_fields(item.get('standardized_artifact_id'))}
+        for item in response['results']
+    ]
+    return response
+
+
 def _result_to_response(result):
     return {
         'component_name': result.component_name,
@@ -53,6 +77,7 @@ def _result_to_response(result):
         'workflow_output_path': result.workflow_output_path,
         'standardized_output_path': result.standardized_output_path,
         'cleaned_output_paths': list(result.cleaned_output_paths),
+        **_artifact_response_fields(result.standardized_artifact_id),
     }
 
 
@@ -235,7 +260,7 @@ def _submit_fsa_batch(component_name, request_data):
             'all_fsas': job.all_fsas,
             'max_workers': job.max_workers,
         })
-    return job.to_response()
+    return _batch_to_response(job)
 
 
 @blp.route('/components/<string:component_name>/batch-runs')
@@ -260,4 +285,39 @@ class GISComponentBatchRunStatus(MethodView):
             component_name=component_name)
         if job is None:
             abort(404, message=f'FSA batch job not found: {batch_id}')
-        return job.to_response()
+        return _batch_to_response(job)
+
+
+@blp.route('/artifacts/<string:artifact_id>/download')
+class GISArtifactDownload(MethodView):
+    """Download a registered standardized output without executing GIS."""
+
+    @blp.response(200, schema={'type': 'string', 'format': 'binary'},
+                  content_type='application/geo+json')
+    @blp.alt_response(404, description='Unknown or malformed artifact ID.')
+    @blp.alt_response(410, description='Registered artifact copy is unavailable.')
+    @blp.alt_response(500, description='Artifact store or read failure.')
+    def get(self, artifact_id):
+        try:
+            artifact, stream = get_artifact_store().open_download(artifact_id)
+        except ArtifactNotFoundError as exc:
+            abort(404, message=str(exc))
+        except ArtifactUnavailableError as exc:
+            abort(410, message=str(exc))
+        except ArtifactError:
+            logger.exception('artifact_download_failed', extra={'artifact_id': artifact_id})
+            abort(500, message='Failed to read artifact.')
+        try:
+            response = send_file(
+                stream,
+                mimetype='application/geo+json',
+                as_attachment=True,
+                download_name=f'{artifact.artifact_id}.geojson',
+                etag=artifact.sha256)
+            response.content_length = artifact.size_bytes
+            response.call_on_close(stream.close)
+        except Exception:
+            stream.close()
+            raise
+        logger.info('artifact_download', extra={'artifact_id': artifact.artifact_id})
+        return response
