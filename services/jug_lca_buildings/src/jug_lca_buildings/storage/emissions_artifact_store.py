@@ -24,7 +24,9 @@ class EmissionsArtifactStore:
     Artifacts are keyed by a deterministic request hash.
     """
 
-    CACHE_NAMESPACE = 'jug_lca_buildings_emissions_v1'
+    # Older results may include holes interpreted as exterior surfaces. Keep
+    # those artifacts, but recompute under the winding-aware reader semantics.
+    CACHE_NAMESPACE = 'jug_lca_buildings_emissions_v2'
 
     def __init__(self, base_dir=None):
         configured_dir = base_dir or os.getenv(

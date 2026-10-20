@@ -71,7 +71,9 @@ class GeometryField(fields.Field):
         super().__init__(metadata={
             'description': (
                 'Polygon or MultiPolygon; coordinate nesting follows type. '
-                'Unknown metadata is accepted and excluded.'),
+                'Unknown metadata is accepted and excluded. Either ring winding '
+                'is accepted; the reader orients a working copy without changing '
+                'source coordinates, polygon parts, or holes.'),
             'oneOf': [
                 _geometry_contract(geometry_type, depth)
                 for geometry_type, depth in GEOMETRY_COORDINATE_DEPTHS.items()
