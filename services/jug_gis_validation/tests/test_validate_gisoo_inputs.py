@@ -199,6 +199,26 @@ def _unit_count_buildings(unit_values):
 
 @unittest.skipIf(_DEPS_SKIP_REASON is not None, _DEPS_SKIP_REASON)
 class TestValidateGISOOInputs(unittest.TestCase):
+    def test_loading_helpers_remain_compatible_after_extraction(self):
+        import json
+        from jug_gis_validation.domain_validation.buildings_input import load_buildings_set
+        payload = _default_buildings_feature_collection()
+        expected, source = load_buildings_set(payload)
+        frame, legacy_source = ValidateGISOO._load_buildings_set(payload)
+        pd.testing.assert_frame_equal(frame, expected)
+        self.assertEqual(source, legacy_source)
+        pd.testing.assert_frame_equal(
+            ValidateGISOO._geojson_to_geodataframe(payload), expected)
+        pd.testing.assert_frame_equal(
+            ValidateGISOO._geojson_text_to_geodataframe(json.dumps(payload)), expected)
+
+    def test_legacy_cli_still_dispatches_validation(self):
+        with patch.object(validation_cli, 'configure_service_logging'), \
+                patch.object(GISValidationApplicationService, 'run_validation',
+                             side_effect=RuntimeError('validation called')) as run:
+            self.assertEqual(validation_cli.main(['--buildings-set', 'input.geojson']), 1)
+        run.assert_called_once()
+
     def test_cli_accepts_unique_attribute_key(self):
         args = validation_cli._build_parser().parse_args([
             '--buildings-set',

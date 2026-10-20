@@ -18,6 +18,7 @@ try:
 
     from jug_gis_validation.domain_validation.uniquify_features import (
         uniquify_features,
+        uniquify_features_with_trace,
     )
     from jug_gis_validation.errors import GISValidationDataContractError
 except ModuleNotFoundError as exc:
@@ -120,6 +121,53 @@ class TestUniquifyFeatures(unittest.TestCase):
         self.assertEqual(stats.removed_features, 8_500)
         self.assertEqual(stats.duplicate_groups, 8_500)
         self.assertTrue((result['area'] == 1).all())
+
+    def test_traced_and_legacy_results_preserve_policy(self):
+        import pandas as pd
+        buildings = _frame([
+            {'roll_id': 'A', 'area': '-2'},
+            {'roll_id': 'A', 'area': -1},
+            {'roll_id': 'A', 'area': '-1'},
+            {'roll_id': 'B', 'area': 1},
+            {'roll_id': 'B', 'area': 1},
+            {'roll_id': 'B', 'area': 2},
+            {'roll_id': 'B', 'area': 2},
+            {'roll_id': None, 'area': float('inf')},
+            {'roll_id': '', 'area': 'bad'},
+            {'roll_id': ' \t', 'area': None},
+            {'roll_id': float('nan'), 'area': None},
+            {'roll_id': pd.NA, 'area': None},
+            {'roll_id': 'singleton', 'area': 'bad'},
+            {'roll_id': ' A ', 'area': 'bad'},
+        ])
+        buildings.index = [7] * len(buildings)
+        original = buildings.copy(deep=True)
+        legacy, stats = uniquify_features(buildings, unique_attribute_key='roll_id', area_key='area')
+        traced, traced_stats, records = uniquify_features_with_trace(
+            buildings, unique_attribute_key='roll_id', area_key='area')
+        pd.testing.assert_frame_equal(legacy, traced)
+        pd.testing.assert_frame_equal(buildings, original)
+        self.assertEqual(stats, traced_stats)
+        self.assertEqual([r['input_position'] for r in records if r['status'] == 'retained'],
+                         [1, 5, 7, 8, 9, 10, 11, 12, 13])
+        self.assertEqual(records[1]['reason'], 'earliest_maximum_area')
+        self.assertEqual(records[5]['reason'], 'earliest_maximum_area')
+        self.assertEqual(records[3]['reason'], 'smaller_area')
+
+    def test_all_invalid_duplicate_areas_raise_in_both_interfaces(self):
+        for invalid in (None, 'bad', float('nan'), float('inf'), float('-inf')):
+            for rows in ([{'roll_id': 'A', 'area': 10}, {'roll_id': 'A', 'area': invalid}],
+                         [{'roll_id': 'A', 'area': invalid}, {'roll_id': 'A', 'area': 10}]):
+                for operation in (uniquify_features, uniquify_features_with_trace):
+                    with self.subTest(invalid=invalid, operation=operation.__name__), \
+                            self.assertRaisesRegex(GISValidationDataContractError, 'Duplicate.*area'):
+                        operation(_frame(rows), unique_attribute_key='roll_id', area_key='area')
+
+    def test_unhashable_identifier_still_reports_input_position(self):
+        for operation in (uniquify_features, uniquify_features_with_trace):
+            with self.assertRaisesRegex(GISValidationDataContractError, 'input position 0'):
+                operation(_frame([{'roll_id': ['A'], 'area': 10}]),
+                          unique_attribute_key='roll_id', area_key='area')
 
 
 if __name__ == '__main__':
