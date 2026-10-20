@@ -27,6 +27,7 @@ The most updated case is `mtl_fsa_gisoo`. In this name, `fsa` refers to using Fo
 - [Install For Local Runs](#install-for-local-runs)
 - [Direct Python Run](#direct-python-run)
 - [REST API Run](#rest-api-run)
+- [Standardized Artifact Downloads](#standardized-artifact-downloads)
 - [Docker API Run](#docker-api-run)
 - [Docker Direct Run](#docker-direct-run)
 - [Published Package Docker Build](#published-package-docker-build)
@@ -267,6 +268,65 @@ explicit `fsas` iterable skips boundary-layer discovery. CLI, API, worker,
 Docker, and programmatic execution use the generic runner for every
 FSA-capable component.
 
+## Standardized Artifact Downloads
+
+Successful `standardize` runs include `standardized_artifact_id` and
+`standardized_download_url` alongside the existing output-path fields. Each
+successful standardized per-FSA batch item has the same fields, including in
+a batch with other failed items. Independent runs and failed items return null
+artifact fields. Older persisted batch results without registrations also
+return null; reading status does not register old paths or run preprocessing.
+
+```powershell
+$run = Invoke-RestMethod `
+  -Method Post `
+  -Uri http://127.0.0.1:5000/components/mtl_fsa_gisoo/runs `
+  -ContentType "application/json" `
+  -Body '{"mode":"standardize","fsa":"H3H"}'
+Invoke-WebRequest -Uri $run.standardized_download_url -OutFile .\H3H.geojson
+```
+
+The URL calls `GET /artifacts/{artifact_id}/download` and returns the stored
+GeoJSON as an `application/geo+json` attachment. It never invokes a workflow or
+adapter. Clients need HTTP access only. Download URLs use the API request's
+scheme, host, and mount prefix; deployments must expose those correctly through
+their existing proxy configuration.
+
+Registration copies the completed GeoJSON into a new UUID directory and then
+commits metadata to SQLite. The existing output paths remain unchanged. Reruns
+always get new IDs and separate copies, so overwriting or deleting a workflow
+output cannot change earlier downloads. A registration failure fails the run
+or that FSA item. Direct application and generic CLI runs also register outputs
+without needing Flask; application results carry the ID, and HTTP responses add
+the URL. Direct component workflow/adapter entry points retain their interfaces.
+
+Set `JUG_GIS_CITIES_ARTIFACT_DIR` to the same persistent directory for the API,
+batch worker, and direct runs whose artifacts should be downloadable. By default,
+it is `jug_gis_cities_artifacts` beside the configured job-store database. Without
+a configured job-store path, that default is under the system temporary directory
+and can be removed by system maintenance. Use a durable location for retention,
+outside component output directories. Compose and the Docker image set it to
+`/data/job_store/artifacts`; Compose persists it in the existing
+`jug_gis_cities_job_store` volume. Preserve and back up the registry and copies
+together. Container recreation preserves them when that volume is retained;
+removing the volume loses both registrations and files.
+
+Artifact copies are retained indefinitely. Workflow `cleanup_outputs` and batch
+restart recovery do not delete them. There is no automatic expiry or deletion
+endpoint, so account for the extra GeoJSON disk usage. To deliberately retire a
+copy, an operator may remove only its UUID directory while keeping its registry
+record; subsequent downloads return `410 Gone`. Never reuse an artifact ID or
+edit a registered copy. A crash before registration can leave an unregistered
+UUID directory, which is never served and can be removed during offline
+maintenance. Registration precedes optional workflow cleanup; if cleanup fails,
+the copy remains retained even though the run reports its existing cleanup error.
+
+Unknown or malformed IDs return `404 Not Found`; registered copies that are
+missing, truncated, or redirected through filesystem links return `410 Gone`.
+Registry and unexpected read failures return `500`. Errors use the normal JSON
+envelope without disclosing artifact storage paths. Filesystem paths and
+unregistered files cannot be selected through the download endpoint.
+
 ## Docker API Run
 
 The Docker image includes PyQGIS and defaults to the REST API.
@@ -309,7 +369,8 @@ $batch = Invoke-RestMethod `
   -Body '{"mode":"standardize","all_fsas":true,"max_workers":3,"cleanup_outputs":true,"keep_outputs":["usage_clean","inter_summary"]}'
 ```
 
-The API and worker share the `jug_gis_cities_job_store` volume. Queued and
+The API and worker share the `jug_gis_cities_job_store` volume for job state,
+artifact registrations, and immutable GeoJSON copies. Queued and
 completed statuses survive container restarts; interrupted running jobs are
 returned to the queue. A persistent component/FSA lock prevents asynchronous
 batches and single-FSA API runs from writing the same output concurrently.

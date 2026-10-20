@@ -88,6 +88,7 @@ ENV LOG_DIR_BASE=/app
 ENV LOG_FILE_NAME=logs/jug_gis_cities.log
 ENV LOG_SERVICE=gis_cities-api
 ENV JUG_GIS_CITIES_JOB_STORE_PATH=/data/job_store/jobs.sqlite3
+ENV JUG_GIS_CITIES_ARTIFACT_DIR=/data/job_store/artifacts
 
 # Default data mount locations inside the container.
 ENV JUG_GIS_CITIES_SAINT_MALACHIE_DATA_DIR=/data/saint_malachie_gisoo_data
