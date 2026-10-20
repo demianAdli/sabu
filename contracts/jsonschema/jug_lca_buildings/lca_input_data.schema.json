@@ -2,18 +2,16 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "contracts/jsonschema/jug_lca_buildings/lca_input_data.schema.json",
   "title": "JUG LCA Buildings Input GeoJSON",
-  "description": "GeoJSON FeatureCollection payload accepted by POST /emissions.",
+  "description": "GeoJSON input shared by both emissions endpoints and direct application calls. Unknown fields at all four object levels are accepted and excluded without modifying the source. Any invalid feature rejects the entire batch before cache lookup. Declared numeric types describe normalized values; Marshmallow also accepts numeric strings and coerces numeric values. No additional geometry type, coordinate length, or domain value checks are applied by input validation.",
   "type": "object",
   "required": ["type", "features"],
-  "additionalProperties": false,
+  "additionalProperties": true,
   "properties": {
     "type": {
-      "type": "string",
-      "enum": ["FeatureCollection"]
+      "type": "string"
     },
     "features": {
       "type": "array",
-      "minItems": 1,
       "items": { "$ref": "#/$defs/feature" }
     }
   },
@@ -21,11 +19,10 @@
     "feature": {
       "type": "object",
       "required": ["type", "id", "geometry", "properties"],
-      "additionalProperties": false,
+      "additionalProperties": true,
       "properties": {
         "type": {
-          "type": "string",
-          "enum": ["Feature"]
+          "type": "string"
         },
         "id": {
           "type": "integer"
@@ -41,22 +38,18 @@
     "geometry": {
       "type": "object",
       "required": ["type", "coordinates"],
-      "additionalProperties": false,
+      "additionalProperties": true,
       "properties": {
         "type": {
-          "type": "string",
-          "enum": ["Polygon"]
+          "type": "string"
         },
         "coordinates": {
           "type": "array",
-          "description": "Polygon coordinates structured as [ring][point][lon, lat].",
+          "description": "Three nested lists of numbers, typically Polygon coordinates structured as [ring][point][lon, lat].",
           "items": {
             "type": "array",
-            "minItems": 4,
             "items": {
               "type": "array",
-              "minItems": 2,
-              "maxItems": 2,
               "items": {
                 "type": "number"
               }
@@ -74,7 +67,7 @@
         "height",
         "year_of_construction"
       ],
-      "additionalProperties": false,
+      "additionalProperties": true,
       "properties": {
         "name": { "type": "string" },
         "address": { "type": "string" },

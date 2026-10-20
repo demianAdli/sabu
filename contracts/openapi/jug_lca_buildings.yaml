@@ -6,6 +6,11 @@ info:
     OpenAPI contract for the building life-cycle assessment service.
     This service computes embodied and end-of-life emissions from a GeoJSON FeatureCollection of buildings.
     All emission values returned by this service are expressed in kgCO2e per building.
+    Both endpoints use the same Marshmallow validation as direct application calls.
+    Unknown fields at FeatureCollection, Feature, Geometry, and Properties levels are accepted
+    and excluded from normalized computation, cache, and report input without modifying the source.
+    Required fields cannot be null. Any invalid feature rejects the entire batch with 422 field errors.
+    Numeric strings are normalized by Marshmallow to the declared numeric types before cache lookup.
 servers:
   - url: http://localhost:5000
     description: Local development
@@ -58,7 +63,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '422':
-          description: Validation error for request payload
+          description: Validation error for request payload; the entire batch is rejected. Nested field errors appear in errors.json.
           content:
             application/json:
               schema:
@@ -116,7 +121,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '422':
-          description: Uploaded GeoJSON schema validation error
+          description: Uploaded GeoJSON schema validation error; the entire batch is rejected. Nested field errors appear in errors.
           content:
             application/json:
               schema:
@@ -131,6 +136,8 @@ components:
   schemas:
     LCAInputData:
       type: object
+      additionalProperties: true
+      description: Additional metadata is accepted and excluded. Declared field types describe normalized values.
       required: [type, features]
       properties:
         type:
@@ -142,6 +149,8 @@ components:
             $ref: '#/components/schemas/Feature'
     Feature:
       type: object
+      additionalProperties: true
+      description: Additional metadata is accepted and excluded; all required fields must validate for every feature.
       required: [type, id, geometry, properties]
       properties:
         type:
@@ -156,6 +165,8 @@ components:
           $ref: '#/components/schemas/BuildingProperties'
     Geometry:
       type: object
+      additionalProperties: true
+      description: Additional metadata is accepted and excluded. Schema validation adds no geometry type or coordinate length rules.
       required: [type, coordinates]
       properties:
         type:
@@ -163,17 +174,17 @@ components:
           example: Polygon
         coordinates:
           type: array
-          description: Polygon coordinates as [ring][point][lon/lat]
+          description: Three nested lists of numbers, typically Polygon coordinates as [ring][point][lon/lat]. Numeric strings are normalized to numbers.
           items:
             type: array
             items:
               type: array
               items:
                 type: number
-              minItems: 2
-              maxItems: 2
     BuildingProperties:
       type: object
+      additionalProperties: true
+      description: Additional properties are accepted and excluded. Numeric strings are normalized to the declared numeric types.
       required:
         - name
         - address
