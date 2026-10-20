@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/jsonschema/jug_gis_validation/uniquification_request.schema.json",
+  "title": "Standalone GIS Uniquification Request",
+  "description": "POST /uniquifications. Exactly one input source; no census or comparison fields are required or accepted. Both configured columns must exist in the loaded input.",
+  "type": "object",
+  "required": ["unique_attribute_key"],
+  "oneOf": [
+    { "required": ["buildings_set"] },
+    { "required": ["buildings_set_path"] }
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "buildings_set": { "$ref": "#/$defs/featureCollection" },
+    "buildings_set_path": {
+      "type": "string", "pattern": "\\S",
+      "description": "GeoJSON file path visible to the running service."
+    },
+    "unique_attribute_key": { "type": "string", "pattern": "\\S" },
+    "area_key": { "type": "string", "pattern": "\\S", "default": "area" }
+  },
+  "$defs": {
+    "featureCollection": {
+      "type": "object",
+      "required": ["type", "features"],
+      "properties": {
+        "type": { "const": "FeatureCollection" },
+        "features": { "type": "array", "items": { "$ref": "#/$defs/feature" } }
+      }
+    },
+    "feature": {
+      "type": "object",
+      "required": ["type", "geometry", "properties"],
+      "properties": {
+        "type": { "const": "Feature" },
+        "id": { "type": ["string", "number"] },
+        "geometry": { "type": ["object", "null"] },
+        "properties": {
+          "type": "object",
+          "description": "Arbitrary properties; no census, postal-code, function, floor, or height fields are required."
+        }
+      }
+    }
+  }
+}

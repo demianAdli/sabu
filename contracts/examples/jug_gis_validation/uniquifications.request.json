@@ -1,0 +1,13 @@
+{
+  "unique_attribute_key": "roll_id",
+  "area_key": "area",
+  "buildings_set": {
+    "type": "FeatureCollection",
+    "features": [
+      { "type": "Feature", "geometry": null, "properties": { "roll_id": "A", "area": 10 } },
+      { "type": "Feature", "geometry": null, "properties": { "roll_id": "A", "area": 20 } },
+      { "type": "Feature", "geometry": null, "properties": { "roll_id": "A", "area": 20 } },
+      { "type": "Feature", "geometry": null, "properties": { "roll_id": null, "area": null } }
+    ]
+  }
+}

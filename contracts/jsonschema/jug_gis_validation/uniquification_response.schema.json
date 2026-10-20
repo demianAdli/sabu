@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/jsonschema/jug_gis_validation/uniquification_response.schema.json",
+  "title": "Standalone GIS Uniquification Response",
+  "type": "object",
+  "required": ["uniquification", "retained_geojson", "records"],
+  "additionalProperties": false,
+  "properties": {
+    "uniquification": {
+      "$ref": "validation_response.schema.json#/$defs/uniquificationStats"
+    },
+    "retained_geojson": {
+      "$ref": "uniquification_request.schema.json#/$defs/featureCollection"
+    },
+    "records": {
+      "type": "array", "items": { "$ref": "#/$defs/record" },
+      "description": "Exactly one entry per input position, in input order. Removed entries map to retained records; retained entries map to themselves. Counts reconcile with statuses and retained_geojson.features."
+    }
+  },
+  "$defs": {
+    "record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_ref", "input_position", "identifier", "area", "status",
+        "retained_record_ref", "retained_feature_index", "reason"
+      ],
+      "properties": {
+        "record_ref": {
+          "type": "string", "pattern": "^record:[0-9]+$",
+          "description": "Position-based identity within this ordered input; independent of original IDs and index labels."
+        },
+        "input_position": { "type": "integer", "minimum": 0 },
+        "identifier": { "description": "Configured identifier value; missing/non-finite scalars serialize as null." },
+        "area": { "description": "Configured area value before numeric ranking conversion; missing/non-finite scalars serialize as null." },
+        "status": { "type": "string", "enum": ["retained", "removed"] },
+        "retained_record_ref": { "type": "string", "pattern": "^record:[0-9]+$" },
+        "retained_feature_index": {
+          "type": "integer", "minimum": 0,
+          "description": "Zero-based index into retained_geojson.features."
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "missing_identifier", "unique_identifier", "largest_area",
+            "earliest_maximum_area", "smaller_area", "later_tied_maximum"
+          ]
+        }
+      }
+    }
+  }
+}

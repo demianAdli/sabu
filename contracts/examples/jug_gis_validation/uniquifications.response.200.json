@@ -1,0 +1,40 @@
+{
+  "uniquification": {
+    "applied": true,
+    "unique_attribute_key": "roll_id",
+    "ranking_area_key": "area",
+    "input_features": 4,
+    "retained_features": 2,
+    "removed_features": 2,
+    "duplicate_groups": 1
+  },
+  "retained_geojson": {
+    "type": "FeatureCollection",
+    "features": [
+      { "type": "Feature", "geometry": null, "properties": { "roll_id": "A", "area": 20 } },
+      { "type": "Feature", "geometry": null, "properties": { "roll_id": null, "area": null } }
+    ]
+  },
+  "records": [
+    {
+      "record_ref": "record:0", "input_position": 0, "identifier": "A", "area": 10,
+      "status": "removed", "retained_record_ref": "record:1", "retained_feature_index": 0,
+      "reason": "smaller_area"
+    },
+    {
+      "record_ref": "record:1", "input_position": 1, "identifier": "A", "area": 20,
+      "status": "retained", "retained_record_ref": "record:1", "retained_feature_index": 0,
+      "reason": "earliest_maximum_area"
+    },
+    {
+      "record_ref": "record:2", "input_position": 2, "identifier": "A", "area": 20,
+      "status": "removed", "retained_record_ref": "record:1", "retained_feature_index": 0,
+      "reason": "later_tied_maximum"
+    },
+    {
+      "record_ref": "record:3", "input_position": 3, "identifier": null, "area": null,
+      "status": "retained", "retained_record_ref": "record:3", "retained_feature_index": 1,
+      "reason": "missing_identifier"
+    }
+  ]
+}

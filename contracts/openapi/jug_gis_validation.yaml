@@ -12,12 +12,62 @@ info:
     The primary input mode is a pasted GeoJSON FeatureCollection, following the
     `jug_lca_buildings` building-input pattern and adding validation fields.
     `fsa` is required; area fields are required only by the selected area mode.
+
+    Standalone `POST /uniquifications` requires only identifier and ranking-area
+    columns and never loads census data, runs comparisons, or generates plots.
 servers:
   - url: http://localhost:5000
     description: Local Flask development
   - url: http://localhost:8082
     description: Local Docker Compose
 paths:
+  /uniquifications:
+    post:
+      summary: Uniquify features without census processing
+      operationId: uniquifyGISFeatures
+      tags: [GIS Uniquifications]
+      description: |
+        Keep the greatest configured numeric area per non-missing identifier.
+        Equal maximum areas retain the earliest input record. Null/blank
+        identifiers remain independent. Invalid areas fail only in duplicate
+        groups. Retained features preserve input order; inputs are never rewritten.
+        File inputs use the same JSON conversion as inline inputs.
+        No query options, census fields, or comparison options are accepted.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UniquificationRequest'
+            example:
+              buildings_set_path: /data/gis/input.geojson
+              unique_attribute_key: roll_provincial_id
+              area_key: citygisoo_area
+      responses:
+        '200':
+          description: Retained GeoJSON, counts, and one trace entry per input record.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UniquificationResponse'
+        '400':
+          description: Invalid JSON, unreadable input, malformed GeoJSON, or unsupported query options.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Invalid request fields, missing configured columns, unusable identifiers, or invalid duplicate-group areas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Unexpected failure with a generic public message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /validations:
     post:
       summary: Validate a buildings_set from pasted GeoJSON content or a server path
@@ -271,6 +321,108 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
+    UniquificationRequest:
+      type: object
+      required: [unique_attribute_key]
+      additionalProperties: false
+      oneOf:
+        - required: [buildings_set]
+        - required: [buildings_set_path]
+      properties:
+        buildings_set:
+          $ref: '#/components/schemas/StandaloneFeatureCollection'
+        buildings_set_path:
+          type: string
+          pattern: '\S'
+          description: GeoJSON file path visible to the service.
+        unique_attribute_key:
+          type: string
+          pattern: '\S'
+        area_key:
+          type: string
+          pattern: '\S'
+          default: area
+          description: Ranking column; no geometric area calculation is performed.
+    StandaloneFeatureCollection:
+      type: object
+      required: [type, features]
+      properties:
+        type:
+          type: string
+          enum: [FeatureCollection]
+        features:
+          type: array
+          items:
+            type: object
+            required: [type, geometry, properties]
+            properties:
+              type:
+                type: string
+                enum: [Feature]
+              id:
+                oneOf:
+                  - type: string
+                  - type: number
+              geometry:
+                type: object
+                nullable: true
+                description: Any GeoJSON geometry supported by the existing loader, or null.
+              properties:
+                type: object
+                additionalProperties: true
+                description: No census, postal-code, function, floor, or height fields are required.
+    UniquificationResponse:
+      type: object
+      required: [uniquification, retained_geojson, records]
+      additionalProperties: false
+      properties:
+        uniquification:
+          $ref: '#/components/schemas/FeatureUniquificationStats'
+        retained_geojson:
+          $ref: '#/components/schemas/StandaloneFeatureCollection'
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/UniquificationRecord'
+          description: One entry per input position; statuses reconcile with counts and retained GeoJSON length.
+    UniquificationRecord:
+      type: object
+      additionalProperties: false
+      required:
+        - record_ref
+        - input_position
+        - identifier
+        - area
+        - status
+        - retained_record_ref
+        - retained_feature_index
+        - reason
+      properties:
+        record_ref:
+          type: string
+          pattern: '^record:[0-9]+$'
+          description: Position-based identity within this ordered input, independent of source IDs and index labels.
+        input_position:
+          type: integer
+          minimum: 0
+        identifier:
+          description: Configured identifier value; missing/non-finite scalars serialize as null.
+        area:
+          description: Configured area value before numeric ranking conversion; missing/non-finite scalars serialize as null.
+        status:
+          type: string
+          enum: [retained, removed]
+        retained_record_ref:
+          type: string
+          pattern: '^record:[0-9]+$'
+          description: Winning record reference; retained records point to themselves.
+        retained_feature_index:
+          type: integer
+          minimum: 0
+          description: Zero-based index into retained_geojson.features.
+        reason:
+          type: string
+          enum: [missing_identifier, unique_identifier, largest_area, earliest_maximum_area, smaller_area, later_tied_maximum]
     BuildingsSet:
       type: object
       required: [type, features]

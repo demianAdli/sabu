@@ -1,0 +1,5 @@
+{
+  "code": 422,
+  "status": "Unprocessable Entity",
+  "message": "Duplicate 'roll_id' group(s) contain missing, nonnumeric, or non-finite 'area' values. Sample: ['A']"
+}
