@@ -36,6 +36,7 @@
       }
     },
     "geometry": {
+      "description": "Either ring winding is accepted. The reader orients a working copy with counterclockwise exterior rings and clockwise holes, identified by ring position. Coordinate values, polygon parts, holes, and source inputs are preserved. No ring-length, closure, or topology repair is performed.",
       "oneOf": [
         { "$ref": "#/$defs/polygonGeometry" },
         { "$ref": "#/$defs/multiPolygonGeometry" }

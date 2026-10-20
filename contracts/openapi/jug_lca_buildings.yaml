@@ -12,6 +12,8 @@ info:
     Required fields cannot be null. Any invalid feature rejects the entire batch with 422 field errors.
     Numeric strings are normalized by Marshmallow to the declared numeric types before cache lookup.
     Polygon and MultiPolygon geometries, including mixed collections, retain their parts and holes.
+    Either ring winding direction is accepted. The reader orients an internal copy without changing
+    coordinate values or source objects/files; the first ring is exterior and subsequent rings are holes.
     Coordinates must already be WGS84 longitude/latitude; CRS metadata does not trigger reprojection.
 servers:
   - url: http://localhost:5000
@@ -166,7 +168,7 @@ components:
         properties:
           $ref: '#/components/schemas/BuildingProperties'
     Geometry:
-      description: Polygon or MultiPolygon; coordinate nesting must match the declared type. Parts and holes are preserved. No ring-length, closure, or topology validation or geometry repair is performed.
+      description: Polygon or MultiPolygon; coordinate nesting must match the declared type. Either ring winding is accepted and oriented in the reader's working copy, using the first ring as exterior and subsequent rings as holes. Coordinate values, parts, holes, and source inputs are preserved. No ring-length, closure, or topology validation or geometry repair is performed.
       oneOf:
         - $ref: '#/components/schemas/PolygonGeometry'
         - $ref: '#/components/schemas/MultiPolygonGeometry'
