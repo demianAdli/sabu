@@ -115,7 +115,7 @@ class TestGeoJSONSchema(unittest.TestCase):
         city['type'] = 'custom collection label'
         feature = city['features'][0]
         feature['type'] = 'custom feature label'
-        feature['geometry'] = {'type': 'custom geometry label',
+        feature['geometry'] = {'type': 'Polygon',
                                'coordinates': [[[1, 2, 3]]]}
         feature['properties']['height'] = -1
         feature['properties']['name'] = ''
