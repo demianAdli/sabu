@@ -10,6 +10,10 @@ alireza.adli@mail.concordia.ca
 
 ## Overview
 
+The service also offers standalone uniquification through the `uniquify` CLI
+command and `POST /uniquifications`. These run the existing feature selector
+without loading census data, comparing datasets, or generating plots.
+
 **GISOO Validation** service is responsible for comparing cleaned geospatial datasets with census data to ensure consistency, completeness, and accuracy at the district level.
 
 This validation module is part of the larger **Sabu framework**, supporting disaggregated carbon-emissions evaluation beginning from the building sector. It integrates naturally with CityGISOO’s automated cleaning workflows and provides a lightweight, extensible interface to perform data verification across postal-code prefixes (FSA).
@@ -110,6 +114,91 @@ Python and CLI callers can persist the exact post-uniquification validation
 snapshot with `uniquified_output_path` or `--uniquified-output-path`. The REST
 API returns the same snapshot with `?export=geojson`. GeoJSON export requires
 `unique_attribute_key`; the source dataset is never modified.
+
+### Standalone uniquification
+
+Run only uniquification with:
+
+```powershell
+python -m jug_gis_validation uniquify --buildings-set input.geojson --unique-attribute-key roll_provincial_id --area-key citygisoo_area --output-path result.json
+```
+
+Omit `--output-path` to receive the complete JSON result on stdout. The output
+file is a result envelope containing GeoJSON and provenance, not a bare
+GeoJSON file. Extract `retained_geojson` when a separate GeoJSON file is needed.
+The input is never rewritten; output paths referring to the input, including
+hard-link aliases, are rejected. CLI exit codes are `0` for success, `2` for
+argument errors, and `1` for processing or output errors, with errors on stderr.
+
+The equivalent synchronous API call is:
+
+```http
+POST /uniquifications
+Content-Type: application/json
+
+{
+  "buildings_set_path": "/data/gis/input.geojson",
+  "unique_attribute_key": "roll_provincial_id",
+  "area_key": "citygisoo_area"
+}
+```
+
+Use `buildings_set` with a GeoJSON FeatureCollection instead of
+`buildings_set_path` for inline data. Supply exactly one input source.
+`unique_attribute_key` is required; `area_key` defaults to `area` and is used
+only for ranking. Census, postal-code, function, floor, and height fields are
+not required. Other request fields and query options are rejected.
+
+Python callers use
+`GISUniquificationApplicationService.run_uniquification(buildings_set,
+unique_attribute_key='roll_id', area_key='area')`, exported from
+`jug_gis_validation.application`. The returned result exposes
+`retained_features`, `uniquification_stats`, and `records`; `as_dict()` produces
+the same envelope returned by the API and CLI.
+
+The existing selection policy applies unchanged: keep the greatest numeric
+configured area per non-missing identifier, breaking maximum-area ties by
+earliest input position. Missing/null/blank identifiers remain independent.
+Missing, nonnumeric, or non-finite areas fail within duplicate groups only;
+they remain permitted on singleton or missing-identifier records. Zero and
+negative numeric areas are not rejected. Required columns must still exist.
+Retained features preserve input order. Standalone file inputs use the same
+JSON-to-frame conversion as inline inputs to avoid file-driver coercion;
+existing validation file loading remains unchanged.
+
+Success returns HTTP `200` with:
+
+- `uniquification`: existing statistics, including input/retained/removed counts
+  and the number of duplicate groups.
+- `retained_geojson`: retained geometries and properties in a FeatureCollection.
+- `records`: one entry per input position, containing `record_ref`,
+  `input_position`, configured `identifier` and `area` values, `status`,
+  `retained_record_ref`, `retained_feature_index`, and `reason`.
+
+`record_ref` is `record:<zero-based input position>`. It does not depend on
+original GeoJSON IDs, identifier properties, or DataFrame index labels, so
+missing or duplicated IDs and identical records remain distinguishable.
+References apply to this ordered input, not to reordered datasets. Original
+top-level GeoJSON IDs are not synthesized in the retained output; tracing uses
+input positions. Removed records point to the winning `retained_record_ref`;
+retained records point to themselves. `retained_feature_index` locates the
+winner in `retained_geojson.features`. Consequently, input count equals trace
+length, retained count equals GeoJSON length, and retained plus removed equals
+input count. Missing/non-finite scalar values serialize as JSON `null`.
+
+Reasons are `missing_identifier`, `unique_identifier`, `largest_area`,
+`earliest_maximum_area`, `smaller_area`, and `later_tied_maximum`. The first
+four explain retained records; the last two explain removals.
+
+API errors use the existing `message`/optional `errors` envelope: `400` for
+invalid JSON, unreadable inputs, malformed GeoJSON, or unsupported query
+options; `422` for invalid request fields, missing configured columns,
+unusable identifiers, or invalid duplicate-group areas; `500` for unexpected
+failures with a generic public message. No jobs or server-side outputs are
+created by this endpoint.
+
+See the [standalone request example](../../contracts/examples/jug_gis_validation/uniquifications.request.json)
+and [response example](../../contracts/examples/jug_gis_validation/uniquifications.response.200.json).
 
 ---
 

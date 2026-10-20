@@ -14,10 +14,16 @@ try:
     from jug_gis_validation.resources.validations import (
         blp as validations_blueprint,
     )
+    from jug_gis_validation.resources.uniquifications import (
+        blp as uniquifications_blueprint,
+    )
 except ModuleNotFoundError:
     from src.jug_gis_validation.logging_setup import configure_service_logging
     from src.jug_gis_validation.resources.validations import (
         blp as validations_blueprint,
+    )
+    from src.jug_gis_validation.resources.uniquifications import (
+        blp as uniquifications_blueprint,
     )
 
 from sabu_chassis.logging.context import get_request_id, set_request_id
@@ -40,6 +46,7 @@ app.config['OPENAPI_SWAGGER_UI_URL'] = (
 
 api = Api(app)
 api.register_blueprint(validations_blueprint)
+api.register_blueprint(uniquifications_blueprint)
 
 
 @app.before_request
