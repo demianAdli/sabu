@@ -50,6 +50,13 @@ checks and does not repair invalid geometry.
 Polygon parts and interior holes are retained without flattening or splitting
 features. The service adapts the pinned `cerc-hub` reader's MultiPolygon hole
 handling by combining its Polygon parsing results into a single building.
+Either ring winding direction is accepted. Before reading each polygon, the
+service orients a working copy with its exterior ring counterclockwise and
+interior holes clockwise. Ring position determines its role: the first ring is
+the exterior and subsequent rings are holes. This only reverses point order
+where needed; it preserves coordinate values, polygon parts, and holes, and
+leaves source objects/files and cached request geometry unchanged.
+
 Schema acceptance alone does not guarantee that geometry can be processed by
 the calculation engine. Existing reader behavior, including filtering footprints
 smaller than 25 square metres, remains in effect.
@@ -72,6 +79,9 @@ text, or a string file path. Relative file paths retain the fallback to bundled
 service data. Validation happens before cache lookup. Computation, cached request
 artifacts, and application CSV reports use normalized input, so ignored metadata
 and equivalent numeric strings do not change the computation cache identity.
+The winding-aware reader uses a new cache namespace so older potentially
+incorrect hole calculations and CSV reports are recomputed. Existing artifacts
+are retained on disk.
 
 The service also depends on bundled reference data used by the workflow:
 
