@@ -18,6 +18,7 @@ services:
       LOG_SERVICE: gis_cities-api
       JUG_GIS_CITIES_QGIS_PATH: /usr
       JUG_GIS_CITIES_JOB_STORE_PATH: /data/job_store/jobs.sqlite3
+      JUG_GIS_CITIES_ARTIFACT_DIR: /data/job_store/artifacts
       JUG_GIS_CITIES_SAINT_MALACHIE_DATA_DIR: /data/saint_malachie_gisoo_data
       JUG_GIS_CITIES_MTL_FSA_DATA_DIR: /data/mtl_gisoo_fsa_data
     volumes:
@@ -37,6 +38,7 @@ services:
       LOG_SERVICE: gis_cities-batch-worker
       JUG_GIS_CITIES_QGIS_PATH: /usr
       JUG_GIS_CITIES_JOB_STORE_PATH: /data/job_store/jobs.sqlite3
+      JUG_GIS_CITIES_ARTIFACT_DIR: /data/job_store/artifacts
       JUG_GIS_CITIES_SAINT_MALACHIE_DATA_DIR: /data/saint_malachie_gisoo_data
       JUG_GIS_CITIES_MTL_FSA_DATA_DIR: /data/mtl_gisoo_fsa_data
     volumes:
