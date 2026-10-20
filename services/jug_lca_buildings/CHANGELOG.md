@@ -2,9 +2,15 @@
 
 ## [Unreleased]
 
+### Added
+- Support Polygon and MultiPolygon coordinate layouts, including mixed collections, through shared direct/API validation with structured errors for unsupported geometry types or incorrect coordinate nesting.
+
 ### Changed
 - Exclude unknown GeoJSON fields at FeatureCollection, Feature, Geometry, and Properties levels without modifying the original input.
 - Apply shared Marshmallow validation and normalization to direct application calls and both emissions API endpoints before cache lookup; reject invalid batches with field details and use normalized input for computation, caching, and reporting.
+
+### Fixed
+- Preserve multipart footprint areas and interior holes by adapting the pinned geometry reader to combine its Polygon parsing results into one building per MultiPolygon feature, without rewriting source geometry.
 
 ## [0.1.1] - 2026-04-28
 

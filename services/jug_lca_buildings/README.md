@@ -40,8 +40,23 @@ For a basic test request, you need a GeoJSON `FeatureCollection` where each feat
 `id`, `geometry`, and `properties`, geometry `type` and `coordinates`, and all
 five building properties above are required and cannot be null. Marshmallow
 validates their declared types and normalizes numeric values (including numeric
-strings). Coordinates use three nested lists of numbers. Validation does not
-add geometry type, coordinate length, or domain value checks.
+strings). Geometry types are `Polygon` and `MultiPolygon`, including both types
+in one collection. Polygon coordinates use `[ring][point][number]` (three nested
+lists); MultiPolygon coordinates use `[polygon][ring][point][number]` (four).
+Unsupported types and incorrect coordinate nesting produce field validation
+errors. Validation adds no ring-length, ring-closure, topology, or domain-value
+checks and does not repair invalid geometry.
+
+Polygon parts and interior holes are retained without flattening or splitting
+features. The service adapts the pinned `cerc-hub` reader's MultiPolygon hole
+handling by combining its Polygon parsing results into a single building.
+Schema acceptance alone does not guarantee that geometry can be processed by
+the calculation engine. Existing reader behavior, including filtering footprints
+smaller than 25 square metres, remains in effect.
+
+Input coordinates must be WGS84 longitude/latitude. Accepting and excluding
+`crs` metadata does not reproject coordinates; perform any necessary CRS
+conversion upstream.
 
 Additional fields at the FeatureCollection, Feature, Geometry, and Properties
 levels are accepted and excluded from computation input. The original object
@@ -76,6 +91,7 @@ Contract examples already exist in the repository and are the safest starting po
 The contract examples include:
 
 - an example JSON body for `POST /emissions`
+- MultiPolygon and mixed Polygon/MultiPolygon request examples
 - an example JSON success response
 - an example CSV export response
 - example error payloads for invalid upload and validation failures
