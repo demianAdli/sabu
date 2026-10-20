@@ -34,10 +34,12 @@ class _ComponentResult:
             self,
             workflow_output_path,
             standardized_output_path=None,
-            cleaned_output_paths=()):
+            cleaned_output_paths=(),
+            standardized_artifact_id=None):
         self.workflow_output_path = workflow_output_path
         self.standardized_output_path = standardized_output_path
         self.cleaned_output_paths = cleaned_output_paths
+        self.standardized_artifact_id = standardized_artifact_id
 
 
 class _FeatureLayer:
@@ -74,7 +76,8 @@ class _FakeExecutor:
     def submit(self, runner, **kwargs):
         self.submissions.append((runner, kwargs))
         fsa = kwargs['fsa']
-        return _FakeFuture(FsaBatchItemResult(fsa=fsa, succeeded=True))
+        return _FakeFuture(FsaBatchItemResult(
+            fsa=fsa, succeeded=True, standardized_artifact_id=f'artifact-{fsa}'))
 
 
 class TestFsaBatchRunner(unittest.TestCase):
@@ -199,7 +202,7 @@ class TestFsaBatchRunner(unittest.TestCase):
     def test_failure_is_recorded_and_remaining_fsas_continue(self):
         component_runner = Mock(side_effect=[
             RuntimeError('boom'),
-            _ComponentResult('future_H2X.gpkg'),
+            _ComponentResult('future_H2X.gpkg', standardized_artifact_id='a' * 32),
         ])
 
         result = run_fsa_batch(
@@ -211,6 +214,8 @@ class TestFsaBatchRunner(unittest.TestCase):
         self.assertEqual(result.failed_count, 1)
         self.assertIn('RuntimeError: boom', result.results[0].error)
         self.assertTrue(result.results[1].succeeded)
+        self.assertIsNone(result.results[0].standardized_artifact_id)
+        self.assertEqual(result.results[1].standardized_artifact_id, 'a' * 32)
 
     def test_three_worker_parallel_results_keep_fsa_order(self):
         _FakeExecutor.instances = []
@@ -240,6 +245,9 @@ class TestFsaBatchRunner(unittest.TestCase):
         self.assertEqual(
             tuple(result.fsa for result in results),
             ('H3H', 'H2X', 'H1A'))
+        self.assertEqual(
+            tuple(result.standardized_artifact_id for result in results),
+            ('artifact-H3H', 'artifact-H2X', 'artifact-H1A'))
         executor = _FakeExecutor.instances[0]
         self.assertEqual(executor.max_workers, 3)
         self.assertIs(executor.mp_context, spawn_context)

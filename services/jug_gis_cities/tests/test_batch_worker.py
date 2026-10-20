@@ -3,6 +3,7 @@ import os
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 
@@ -22,9 +23,12 @@ from src.jug_gis_cities.application.fsa_batch_runner import (
     FsaBatchRunResult,
 )
 from src.jug_gis_cities import batch_worker
+from src.jug_gis_cities.application.artifacts import ArtifactStore
 
 
 class _FakeRunner:
+    artifact_id = None
+
     def __init__(self, **kwargs):
         self.component_name = kwargs['component_name']
         self.mode = kwargs['mode']
@@ -42,7 +46,8 @@ class _FakeRunner:
             FsaBatchItemResult(
                 fsa='H3H',
                 succeeded=True,
-                workflow_output_path='H3H.gpkg'),
+                workflow_output_path='H3H.gpkg',
+                standardized_artifact_id=self.artifact_id),
             FsaBatchItemResult(
                 fsa='H2X',
                 succeeded=False,
@@ -78,12 +83,17 @@ class TestFsaBatchJobWorker(unittest.TestCase):
 
     @patch.object(batch_worker, 'FsaBatchRunner', _FakeRunner)
     def test_worker_persists_ordered_partial_failure_results(self):
+        source = Path(self.temp_dir.name) / 'standardized.geojson'
+        source.write_bytes(b'{"type":"FeatureCollection","features":[]}')
+        artifacts = ArtifactStore(Path(self.temp_dir.name) / 'artifacts')
+        artifact = artifacts.register(source, component_name='future_fsa_gisoo', fsa='H3H')
         created = self._create_job()
         worker = batch_worker.FsaBatchJobWorker(
             store=self.store,
             worker_id='worker-1')
 
-        self.assertTrue(worker.run_once())
+        with patch.object(_FakeRunner, 'artifact_id', artifact.artifact_id):
+            self.assertTrue(worker.run_once())
 
         completed = self.store.get_job(created.batch_id)
         self.assertEqual(completed.status, 'failed')
@@ -93,6 +103,13 @@ class TestFsaBatchJobWorker(unittest.TestCase):
             ('H3H', 'H2X'))
         self.assertEqual(completed.succeeded_count, 1)
         self.assertEqual(completed.failed_count, 1)
+        restarted = SqliteBatchJobStore(self.store.path).get_job(created.batch_id)
+        self.assertEqual(restarted.results[0]['standardized_artifact_id'], artifact.artifact_id)
+        self.assertIsNone(restarted.results[1]['standardized_artifact_id'])
+        _, stream = ArtifactStore(artifacts.directory).open_download(
+            restarted.results[0]['standardized_artifact_id'])
+        with stream:
+            self.assertEqual(stream.read(), source.read_bytes())
 
     @patch.object(batch_worker, 'FsaBatchRunner', _FakeRunner)
     def test_worker_requeues_job_when_output_is_locked(self):

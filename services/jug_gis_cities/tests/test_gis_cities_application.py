@@ -32,9 +32,17 @@ from src.jug_gis_cities.application.jug_gis_cities import (
     GisComponentRunResult,
     GISCitiesApplicationService,
 )
+from src.jug_gis_cities.application.artifacts import ArtifactError
 
 
 class TestGISCitiesApplicationService(unittest.TestCase):
+    def setUp(self):
+        patcher = patch(
+            'src.jug_gis_cities.application.jug_gis_cities.get_artifact_store')
+        self.artifact_store = patcher.start().return_value
+        self.artifact_store.register.return_value.artifact_id = 'a' * 32
+        self.addCleanup(patcher.stop)
+
     def test_worker_shutdown_releases_project_layers_and_exits_qgis(self):
         qgis_application = Mock()
         project = Mock()
@@ -163,6 +171,8 @@ class TestGISCitiesApplicationService(unittest.TestCase):
         self.assertEqual(result.workflow_output_path, 'workflow_output.shp')
         self.assertIsNone(result.fsa)
         self.assertIsNone(result.standardized_output_path)
+        self.assertIsNone(result.standardized_artifact_id)
+        self.artifact_store.register.assert_not_called()
         ensure_component_callable_mock.assert_called_once_with(
             component_name='saint_malachie_gisoo',
             module_name='workflow',
@@ -212,6 +222,9 @@ class TestGISCitiesApplicationService(unittest.TestCase):
         ])
         workflow_runner.assert_called_once_with()
         contract_adapter_runner.assert_called_once_with()
+        self.assertEqual(result.standardized_artifact_id, 'a' * 32)
+        self.artifact_store.register.assert_called_once_with(
+            'standardized.geojson', component_name='saint_malachie_gisoo', fsa=None)
 
     @patch.object(GISCitiesApplicationService, '_import_component_callable')
     @patch.object(GISCitiesApplicationService, '_ensure_component_callable')
@@ -423,7 +436,8 @@ class TestGISCitiesApplicationService(unittest.TestCase):
                 mode=GisComponentRunMode.STANDARDIZE,
                 fsa='H3H',
                 workflow_output_path='workflow_H3H.gpkg',
-                standardized_output_path='standardized_H3H.geojson'))
+                standardized_output_path='standardized_H3H.geojson',
+                standardized_artifact_id='b' * 32))
 
         result = GISCitiesApplicationService.run_component(
             'mtl_fsa_gisoo',
@@ -433,6 +447,8 @@ class TestGISCitiesApplicationService(unittest.TestCase):
             keep_outputs=['usage_clean'])
 
         self.assertEqual(result.cleaned_output_paths, ('deleted_output',))
+        self.assertEqual(result.standardized_artifact_id, 'b' * 32)
+        self.artifact_store.register.assert_not_called()
         self.assertEqual(calls, [
             ('cleanup', 'H3H', ['usage_clean'], True),
             ('worker', {
@@ -496,6 +512,17 @@ class TestGISCitiesApplicationService(unittest.TestCase):
                     mode='independent',
                     fsa='H3H',
                     keep_outputs=['usage_clean'])
+
+    def test_registration_failure_fails_component_run(self):
+        self.artifact_store.register.side_effect = ArtifactError('disk full')
+        with patch.object(GISCitiesApplicationService, '_normalize_component_name',
+                          return_value='saint_malachie_gisoo'), \
+                patch.object(GISCitiesApplicationService, '_ensure_component_callable'), \
+                patch.object(GISCitiesApplicationService, '_import_component_callable',
+                             side_effect=[Mock(return_value='raw.shp'),
+                                          Mock(return_value='standardized.geojson')]):
+            with self.assertRaisesRegex(GisComponentError, 'register standardized'):
+                GISCitiesApplicationService.run_component('saint_malachie_gisoo')
 
 
 if __name__ == '__main__':

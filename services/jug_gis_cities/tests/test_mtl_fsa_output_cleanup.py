@@ -15,9 +15,32 @@ if _SABU_CHASSIS_SRC not in sys.path:
     sys.path.insert(0, _SABU_CHASSIS_SRC)
 
 from src.jug_gis_cities.mtl_fsa_gisoo import output_cleanup
+from src.jug_gis_cities.application.artifacts import ArtifactStore
 
 
 class TestMtlFsaOutputCleanup(unittest.TestCase):
+    def test_registered_copy_survives_cleanup_and_source_removal(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_root = Path(temp_dir) / 'outputs'
+            source_directory = output_root / 'H3H' / 'mtl_H3H_gisoo_standardized'
+            source_directory.mkdir(parents=True)
+            source = source_directory / 'standardized.geojson'
+            content = b'{"type":"FeatureCollection","features":[]}'
+            source.write_bytes(content)
+            intermediate = output_root / 'H3H' / 'usage_clean'
+            intermediate.mkdir()
+            (intermediate / 'temporary.gpkg').touch()
+            store = ArtifactStore(Path(temp_dir) / 'artifacts')
+            artifact = store.register(source, component_name='mtl_fsa_gisoo', fsa='H3H')
+            with patch.object(output_cleanup.paths, 'output_paths_dir', str(output_root)):
+                output_cleanup.cleanup_outputs('H3H', release_qgis_layers=False)
+            self.assertFalse(intermediate.exists())
+            self.assertTrue(source.exists())
+            source.unlink()
+            _, stream = ArtifactStore(store.directory).open_download(artifact.artifact_id)
+            with stream:
+                self.assertEqual(stream.read(), content)
+
     @classmethod
     def tearDownClass(cls):
         """Avoid leaking environment-derived config into workflow tests."""
