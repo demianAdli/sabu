@@ -1,6 +1,8 @@
 """WGS84 footprints with exterior rings, holes, and separated building parts."""
 
 from copy import deepcopy
+import json
+from pathlib import Path
 
 from tests.test_input_validation import valid_city
 
@@ -31,6 +33,24 @@ def geometry_cities():
     mixed['features'].append(second)
     return [('polygon_hole', polygon), ('single_multipolygon', single),
             ('multipart_holes', multipart), ('mixed', mixed)]
+
+
+def with_reversed_rings(city, exterior=False, holes=False):
+    result = deepcopy(city)
+    for feature in result['features']:
+        geometry = feature['geometry']
+        polygons = (geometry['coordinates'] if geometry['type'] == 'MultiPolygon'
+                    else [geometry['coordinates']])
+        for polygon in polygons:
+            for index, ring in enumerate(polygon):
+                if (index == 0 and exterior) or (index > 0 and holes):
+                    ring.reverse()
+    return result
+
+
+def clockwise_city():
+    path = Path(__file__).parent / 'data' / 'clockwise_multipolygon.geojson'
+    return json.loads(path.read_text(encoding='utf-8'))
 
 
 def invalid_geometries():
@@ -67,7 +87,8 @@ def add_metadata_and_numeric_strings(city):
         feature['properties']['extra'] = None
         feature['id'] = str(feature['id'])
         feature['properties']['height'] = str(feature['properties']['height'])
-        feature['properties']['year_of_construction'] = '1995'
+        feature['properties']['year_of_construction'] = str(
+            feature['properties']['year_of_construction'])
         position = feature['geometry']['coordinates']
         while isinstance(position[0], list):
             position = position[0]

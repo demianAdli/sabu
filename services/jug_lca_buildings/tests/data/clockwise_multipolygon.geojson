@@ -1,0 +1,55 @@
+{
+  "type": "FeatureCollection",
+  "name": "mtl_H1R_gisoo_standardized_wgs84",
+  "crs": {
+    "type": "name",
+    "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [-73.6197101, 45.5855215],
+              [-73.6198064, 45.5854173],
+              [-73.6198477, 45.5854361],
+              [-73.6198391, 45.5854449],
+              [-73.61989017780753, 45.58546852059697],
+              [-73.61980396318117, 45.58556426661551],
+              [-73.6197101, 45.5855215]
+            ]
+          ]
+        ]
+      },
+      "id": 100000,
+      "properties": {
+        "fid": 1,
+        "name": "09996612",
+        "citygisoo_id": "59d95678-5ace-4441-9bfd-fad3b480a007",
+        "processing_tool": "citygisoo",
+        "processed_by": "Sabu GIS Cities",
+        "FSA": "H1R",
+        "citygisoo_area": 113.72838229313493,
+        "height": 9.82870101928711,
+        "function": "1000",
+        "year_of_construction": "1986",
+        "construction_type": "5",
+        "address": "9213 \u00a0LIONEL-GROULX",
+        "address_count": "1",
+        "roll_provincial_id": "66023954945531750000000",
+        "usage_provincial_id": "66023954945531750000000",
+        "nrcan_building_area": 245.92,
+        "roll_area": 353.0,
+        "usage_area": 353.0,
+        "main_floor_area": 211.8,
+        "floor_num": 2,
+        "unit_num": 1,
+        "usage_function": "1000",
+        "mean_height": 8.475881258646647
+      }
+    }
+  ]
+}
