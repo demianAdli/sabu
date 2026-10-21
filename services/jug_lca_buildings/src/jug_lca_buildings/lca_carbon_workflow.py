@@ -4,7 +4,6 @@ jug_lca_buildings package
 lca_carbon_workflow module
 Currently calculates Embodied and End-of-Life
 Returns the summarize of envelope and energy systems
-Licensed under the Apache License, Version 2.0.
 Project Designer and Developer: Alireza Adli
 alireza.adli@mail.concordia.ca
 alireza.adli4@gmail.com

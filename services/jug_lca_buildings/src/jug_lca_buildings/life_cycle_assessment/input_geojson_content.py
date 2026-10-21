@@ -4,7 +4,6 @@ jug_lca_buildings package
 input_geojson_content module
 Returns a temporary path to input the GeometryFactory
 Project Designer and Developer: Alireza Adli
-Licensed under the Apache License, Version 2.0.
 alireza.adli@mail.concordia.ca
 alireza.adli4@gmail.com
 www.demianadli.com

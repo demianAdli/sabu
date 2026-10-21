@@ -1,4 +1,10 @@
-"""Prepare an explicitly identified cache directory for evaluation runs.
+"""
+Project Designer and Developer: Alireza Adli
+alireza.adli@mail.concordia.ca
+alireza.adli4@gmail.com
+www.demianadli.com
+
+Prepare an explicitly identified cache directory for evaluation runs.
 
 This opt-in command records declared provenance, not code or data fingerprints.
 It does not participate in normal application calls or change request hashes.
