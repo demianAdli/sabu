@@ -3,6 +3,8 @@
 ## [Unreleased]
 
 ### Added
+- Add opt-in evaluation cache preparation through `JUG_LCA_ARTIFACTS_DIR`, recording declared source/reference-data provenance and installed software versions, with explicit verification for reuse and no deletion of existing artifacts.
+- Log calculation and CSV cache outcomes with full request hashes and resolved cache directories for evaluation provenance without changing API responses or cache keys.
 - Support Polygon and MultiPolygon coordinate layouts, including mixed collections, through shared direct/API validation with structured errors for unsupported geometry types or incorrect coordinate nesting.
 
 ### Changed

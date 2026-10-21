@@ -90,6 +90,125 @@ The service also depends on bundled reference data used by the workflow:
 - [`src/jug_lca_buildings/data/nrcan_materials_dictionaries.json`](src/jug_lca_buildings/data/nrcan_materials_dictionaries.json)
 - [`src/jug_lca_buildings/data/nrcan_transparent_surfaces_dictionaries.json`](src/jug_lca_buildings/data/nrcan_transparent_surfaces_dictionaries.json)
 
+## Evaluation Cache Setup
+
+Use one **fresh cache directory per calculation configuration**, selected through
+the existing `JUG_LCA_ARTIFACTS_DIR` environment variable. Reuse that directory
+deliberately for repeated runs under the same configuration. Request hashes cover
+normalized input and the cache namespace, not calculation code, dependencies, or
+reference data. Identical requests can have identical hashes in different
+configuration directories; associate results using both the directory and hash.
+
+Create a new directory when any of the following changes:
+
+- Calculation code, formulas, constants, normalization, or geometry handling.
+- Relevant dependencies, including `cerc-hub`, geometry/numeric libraries, or
+  changes to locally edited dependency sources.
+- Any of the four NRCan JSON files listed above, or dependency-provided
+  construction catalogues and function mappings used by `cerc-hub`.
+- Calculation settings or catalogue selections. For CSV evaluation, also use a
+  new directory after report-generation changes.
+
+Changing the request alone does not require a new configuration directory;
+normalized requests already have separate cache entries. To measure a fresh
+calculation under an unchanged configuration, choose another unused directory.
+No `--cold` option or cache deletion is required. Existing caches remain intact.
+
+### Record The Configuration
+
+Save a configuration JSON file **outside** the chosen cache directory, for
+example `evaluation-config.json`. Replace these example identifiers with
+identifiers for archived source/data snapshots or revisions that you can recover:
+
+```json
+{
+  "configuration_label": "baseline-01",
+  "source_revision": "source-snapshot-01",
+  "local_changes": "none",
+  "reference_data": {
+    "nrcan_archetypes.json": "nrcan-snapshot-01",
+    "nrcan_constructions_cap_3.json": "nrcan-snapshot-01",
+    "nrcan_materials_dictionaries.json": "nrcan-snapshot-01",
+    "nrcan_transparent_surfaces_dictionaries.json": "nrcan-snapshot-01",
+    "cerc-hub-data": "cerc-hub-0.2.0.8-bundled-data"
+  },
+  "calculation_settings": {}
+}
+```
+
+Use `local_changes` to identify a saved patch or source snapshot if the checkout
+differs from `source_revision`; `none` means no local changes. Record additional
+modified dependency sources or data sets in the configuration as needed.
+`calculation_settings: {}` records the existing application defaults. This field
+documents the evaluation; the preparation command does not apply settings or
+change which catalogues the application uses.
+
+From `services/jug_lca_buildings`, using the same Python environment as the
+evaluation, prepare the directory (PowerShell):
+
+```powershell
+$env:JUG_LCA_ARTIFACTS_DIR = Join-Path (Get-Location) '.runtime/evaluations/baseline-01'
+python -m src.jug_lca_buildings.evaluation_cache --configuration evaluation-config.json
+```
+
+For an installed package, use `python -m jug_lca_buildings.evaluation_cache`
+instead. The command requires an explicit environment variable and creates
+`evaluation_configuration.json` at its resolved directory. It records the
+declared configuration, Python/platform details, all installed distribution
+versions (including transitive dependencies), cache namespace, directory, and UTC
+creation time. Archive the referenced source, patches, data, and dependency
+artifacts alongside evaluation outputs; identifiers and package versions alone
+do not preserve their contents. Package versions alone also cannot identify
+edits to a source checkout.
+
+Run direct application calls from the same working directory and environment,
+or start the API with that environment variable set. For an API in a container,
+prepare the cache inside the same image/environment and at the same mounted
+path used by the API. A separately running API does not inherit later changes
+to your shell environment: restart it with the selected directory. Keep the
+directory fixed throughout each evaluation, including calculation and CSV export.
+
+Before a repeated evaluation, explicitly verify reuse:
+
+```powershell
+python -m src.jug_lca_buildings.evaluation_cache --configuration evaluation-config.json --reuse
+```
+
+Reuse requires matching declared provenance, software environment, namespace,
+and directory. The check is conservative: a change to even an unrelated installed
+distribution requires another directory. The command never rewrites a manifest
+or deletes artifacts; it rejects nonempty directories without a manifest rather
+than assigning provenance to historical results. Legacy caches remain usable
+through the existing application calls.
+
+Preparation is opt-in and does not gate normal API/direct invocation. It does
+not detect undeclared code/data edits, take source snapshots, or automatically
+fingerprint calculation/reference data in cache keys. Selecting a new directory
+and accurately declaring provenance remain the evaluator's responsibility.
+
+### Associate Results With Provenance
+
+The application emits `emissions_cache_outcome` INFO log records with the full
+`request_hash`, resolved `cache_directory`, `cache_hit`, and `artifact_kind`
+(`emissions` or `csv_report`). The existing API JSON logging preserves these
+fields. For direct invocation, enable INFO logging with a handler that retains
+record extras (for example the existing service JSON logging configuration).
+Direct `compute_emissions` results already expose `request_hash` and `cache_hit`;
+`build_csv_report` exposes its separate report-cache hit status.
+
+For each evaluation, retain logs or a run record containing the cache directory,
+full request hash, calculation/report hit status, input identifier, and result
+output location. Archive the directory's `evaluation_configuration.json` with
+those outputs. `<cache_directory>/<request_hash>/` contains the existing
+`request.json`, `emissions.json`, `metadata.json`, and optional
+`emissions_report.csv`; their formats and API response bodies are unchanged.
+Cache-hit status describes each invocation and is recorded in logs, not rewritten
+into the original artifact metadata.
+
+The optional `perf_runs/run_cls_perf.py` and `run_cls_perf_csv.py` scripts set
+their own cache directory. When using them, pass `--artifact-dir` with the exact
+prepared directory and omit `--cold`.
+
 ## Example Test Data
 
 Contract examples already exist in the repository and are the safest starting point for manual or integration testing:
