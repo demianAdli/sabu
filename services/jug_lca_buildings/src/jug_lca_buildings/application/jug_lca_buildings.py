@@ -11,11 +11,27 @@ www.demianadli.com
 """
 
 from dataclasses import dataclass
+import logging
 
 from ..lca_carbon_workflow import LCACarbonWorkflow
 from ..reporting import EmissionsReportExporter
 from ..storage import EmissionsArtifactStore
 from .input_validation import normalize_city_input
+
+
+logger = logging.getLogger(__name__)
+
+
+def _log_cache_outcome(store, request_hash, cache_hit, artifact_kind):
+    logger.info(
+        'emissions_cache_outcome',
+        extra={
+            'request_hash': request_hash,
+            'cache_hit': cache_hit,
+            'artifact_kind': artifact_kind,
+            'cache_directory': str(store.base_dir.resolve()),
+        },
+    )
 
 
 @dataclass(frozen=True)
@@ -42,6 +58,7 @@ class EmissionsApplicationService:
         request_hash = store.build_request_hash(request_city)
         cached_data = store.load_emissions_data(request_hash)
         if cached_data is not None:
+            _log_cache_outcome(store, request_hash, True, 'emissions')
             return EmissionsComputationResult(
                 request_hash=request_hash,
                 emissions_data=cached_data,
@@ -54,6 +71,7 @@ class EmissionsApplicationService:
             'nrcan_constructions_cap_3.json',
         ).export_emissions()
         store.save_emissions_data(request_hash, request_city, emissions_data)
+        _log_cache_outcome(store, request_hash, False, 'emissions')
         return EmissionsComputationResult(
             request_hash=request_hash,
             emissions_data=emissions_data,
@@ -73,6 +91,9 @@ class EmissionsApplicationService:
             )
             store.save_csv_report(computation_result.request_hash, csv_text)
 
+        _log_cache_outcome(
+            store, computation_result.request_hash, csv_cache_hit, 'csv_report',
+        )
         return {
             'csv_text': csv_text,
             'filename': store.build_csv_filename(
