@@ -1,19 +1,27 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "jug_sim"
+name = "jug_sim_buildings"
 version = "0.1.0"
-description = "Framework for designing and executing carbon emissions estimation scenarios. Currently under development."
+description = "Foundation for building carbon emissions simulation scenarios."
 authors = [
   { name = "Alireza Adli" }
 ]
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10,<3.13"
 
 dependencies = [
-  "cerc-hub==0.2.0.8",
   "flask==3.1.1",
   "flask-smorest==0.46.1",
+  "marshmallow>=3.24.1,<5",
+  "sabu-chassis>=0.1.1",
 ]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["jug_sim_buildings*"]
