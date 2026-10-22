@@ -1,0 +1,99 @@
+openapi: 3.0.2
+info:
+  title: Buildings Simulation API
+  version: v1
+  description: |
+    Process health API for jug_sim_buildings. Scenario execution is a CLI
+    workflow consuming upstream APIs, not an HTTP endpoint of this service.
+servers:
+  - url: http://localhost:5000
+    description: Local Flask development
+tags:
+  - name: Health
+    description: Service process health.
+paths:
+  /health:
+    get:
+      summary: Report service process health.
+      operationId: getBuildingsSimulationHealth
+      tags: [Health]
+      description: Reports process health without checking downstream services.
+      parameters:
+        - in: header
+          name: X-Request-ID
+          required: false
+          description: Request identifier; takes precedence over X-Correlation-ID.
+          schema:
+            type: string
+        - in: header
+          name: X-Correlation-ID
+          required: false
+          description: Fallback when X-Request-ID is absent or empty. An ID is generated if both headers are absent or empty.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/RequestID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                service: jug_sim_buildings
+                status: ok
+        '500':
+          description: Unexpected application error.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/RequestID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: Internal Server Error
+        default:
+          $ref: '#/components/responses/DEFAULT_ERROR'
+components:
+  headers:
+    RequestID:
+      description: Identifier used for this request and its logs.
+      schema:
+        type: string
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        service:
+          type: string
+        status:
+          type: string
+      required: [service, status]
+      additionalProperties: false
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: Error code
+        status:
+          type: string
+          description: Error name
+        message:
+          type: string
+          description: Error message
+        errors:
+          type: object
+          description: Errors
+          additionalProperties: {}
+      additionalProperties: false
+  responses:
+    DEFAULT_ERROR:
+      description: Default error response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
