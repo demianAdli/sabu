@@ -1,0 +1,17 @@
+# Observed pyqgis344 baseline, 2026-10-22: Python 3.12.13 / QGIS 3.44.9.
+# Constraints for existing GIS services and the simulation HTTP client.
+# Supply with pip -c during a deliberate installation in a verification environment.
+# This is not a complete lockfile or an installer for QGIS/GDAL/Qt/PROJ.
+# Preserve the OSGeo4W-managed native stack; do not recreate it with pip.
+Flask==3.1.1
+flask-smorest==0.46.1
+marshmallow==4.3.0
+sabu-chassis==0.1.1
+requests==2.33.1
+citygisoo==0.3
+geopandas==1.1.3
+shapely==2.1.2
+pyproj==3.7.2
+pandas==3.0.3
+numpy==2.4.4
+matplotlib==3.11.1
