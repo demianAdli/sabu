@@ -18,6 +18,8 @@ python -m jug_sim_buildings.scenario_001 --config contracts/examples/jug_sim_bui
 This executes real preprocessing. Relative output paths resolve against the
 configuration file; the example points to `output_files/scenario_001` at the
 repository root. These examples are repository-level artifacts, not packaged
-service resources. The consumed HTTP contracts remain owned by
+service resources. Runs are grouped as `<output_root>/<FSA>/<run_id>/`, with
+`retained.geojson` inside each run; existing run directories are never migrated.
+The consumed HTTP contracts remain owned by
 [`jug_gis_cities`](../jug_gis_cities/README.md) and
 [`jug_gis_validation`](../jug_gis_validation/README.md).
