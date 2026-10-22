@@ -3,6 +3,8 @@
 ## [Unreleased]
 
 ### Added
+- Shared scenario configuration JSON Schema and health API specification/examples
+  under the repository's `contracts/` layout.
 - Scenario_001 CLI and Flask-independent workflow for Montreal FSA preprocessing,
   artifact download, and provincial-ID uniquification through upstream APIs.
 - Configurable service URLs, H2M FSA default, timeouts, run output root, and
@@ -19,6 +21,10 @@
 - Focused foundation tests and installation/startup instructions.
 
 ### Changed
+- Moved the scenario configuration example to `contracts/examples/jug_sim_buildings/`,
+  updated references, and removed it from service source-distribution packaging.
+- Replaced the empty `contracts/openapi/jug_sim.yaml` placeholder with
+  `contracts/openapi/jug_sim_buildings.yaml` for the implemented health API.
 - Corrected the distribution name to `jug_sim_buildings`, configured src-layout
   packaging, aligned Python support to 3.10–3.12, and declared foundation-only
   dependencies. The package version remains `0.1.0`.

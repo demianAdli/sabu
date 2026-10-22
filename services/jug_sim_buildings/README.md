@@ -8,12 +8,17 @@ upstream HTTP APIs and preserves artifacts and positional provenance per run.
 From the repository root after installation, run:
 
 ```powershell
-python -m jug_sim_buildings.scenario_001 --config services/jug_sim_buildings/examples/scenario_001.json
+python -m jug_sim_buildings.scenario_001 --config contracts/examples/jug_sim_buildings/scenario_001.json
 ```
 
 This command executes real preprocessing; configure the upstream services first.
 Normal scenario runs request upstream cleanup. No GIS execution happens during
 imports, `--help`, foundation API startup, or health requests.
+
+Repository-level [examples](../../contracts/examples/jug_sim_buildings/README.md),
+[configuration schema](../../contracts/jsonschema/jug_sim_buildings/scenario_001_config.schema.json),
+and [OpenAPI specification](../../contracts/openapi/jug_sim_buildings.yaml) live
+under `contracts/`. Runtime schemas and response checks stay inside this service.
 
 ## Install and run
 

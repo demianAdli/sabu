@@ -1,3 +1,2 @@
 include app.py
 include CHANGELOG.md
-include examples/scenario_001.json
