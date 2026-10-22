@@ -2,6 +2,7 @@
 Sabu project
 jug_gis_cities package
 test_gis_cities_application module
+Verify GIS application execution and worker correlation.
 Project Designer and Developer: Alireza Adli
 alireza.adli@mail.concordia.ca
 alireza.adli4@gmail.com
@@ -33,9 +34,37 @@ from src.jug_gis_cities.application.jug_gis_cities import (
     GISCitiesApplicationService,
 )
 from src.jug_gis_cities.application.artifacts import ArtifactError
+from sabu_chassis.logging.context import get_request_id, set_request_id
 
 
 class TestGISCitiesApplicationService(unittest.TestCase):
+    def test_worker_keeps_correlation_through_shutdown_and_restores_context(self):
+        original = get_request_id()
+        self.addCleanup(set_request_id, original)
+        set_request_id('worker-previous')
+        for fails in (False, True):
+            observed = []
+
+            def run(**kwargs):
+                observed.append(get_request_id())
+                if fails:
+                    raise RuntimeError('workflow failed')
+                return 'result'
+
+            with patch('src.jug_gis_cities.logging_setup.configure_service_logging'), \
+                    patch('src.jug_gis_cities.application.jug_gis_cities._initialize_worker_qgis'), \
+                    patch('src.jug_gis_cities.application.jug_gis_cities._shutdown_worker_qgis',
+                          side_effect=lambda _: observed.append(get_request_id())), \
+                    patch.object(GISCitiesApplicationService, 'run_component', side_effect=run):
+                if fails:
+                    with self.assertRaises(RuntimeError):
+                        _execute_component_worker('mtl_fsa_gisoo', 'standardize', 'H2M', None, 'run-id')
+                else:
+                    self.assertEqual(_execute_component_worker(
+                        'mtl_fsa_gisoo', 'standardize', 'H2M', None, 'run-id'), 'result')
+            self.assertEqual(observed, ['run-id', 'run-id'])
+            self.assertEqual(get_request_id(), 'worker-previous')
+
     def setUp(self):
         patcher = patch(
             'src.jug_gis_cities.application.jug_gis_cities.get_artifact_store')
@@ -135,7 +164,8 @@ class TestGISCitiesApplicationService(unittest.TestCase):
             'mtl_fsa_gisoo',
             'standardize',
             'H3H',
-            ['FSA'])
+            ['FSA'],
+            get_request_id())
 
     def test_normalize_mode_accepts_strings_and_enum(self):
         self.assertEqual(

@@ -2,9 +2,11 @@
 Sabu project
 jug_gis_cities package
 test_mtl_fsa_workflow module
+Verify Montreal FSA workflow composition and retained provenance.
 Project Designer and Developer: Alireza Adli
 alireza.adli@mail.concordia.ca
 alireza.adli4@gmail.com
+www.demianadli.com
 """
 import importlib
 import os
@@ -1013,14 +1015,11 @@ class TestMtlFsaWorkflow(unittest.TestCase):
         'nrcan_usage_roll_H3H',
       ),
       _FakeScrubLayer.calls)
-    self.assertIn(
-      (
-        'drop_fields',
-        'nrcan_usage_roll_H3H',
-        workflow.paths.nrcan_usage_roll_unnecessary_fields,
-        False,
-      ),
-      _FakeScrubLayer.calls)
+    # The workflow preserves merged source fields for adaptation and tracing;
+    # it no longer invokes the old (currently empty) field-deletion list.
+    self.assertFalse(any(
+      call[0] == 'drop_fields' and call[1] == 'nrcan_usage_roll_H3H'
+      for call in _FakeScrubLayer.calls))
     self.assertIn(
       (
         'assign_field_expression',
