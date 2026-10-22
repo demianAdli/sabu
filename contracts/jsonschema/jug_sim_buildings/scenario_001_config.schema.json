@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/jsonschema/jug_sim_buildings/scenario_001_config.schema.json",
+  "title": "JUG SIM Buildings Scenario 001 Configuration",
+  "description": "JSON file configuration for the scenario_001 CLI. Defaults describe runtime behavior; validation does not insert them. Service-side Python validation remains authoritative for URL parsing and filesystem paths. Relative output_root resolves against this configuration file's directory.",
+  "type": "object",
+  "required": ["gis_cities_url", "gis_validation_url", "output_root"],
+  "additionalProperties": false,
+  "properties": {
+    "gis_cities_url": { "$ref": "#/$defs/serviceUrl" },
+    "gis_validation_url": { "$ref": "#/$defs/serviceUrl" },
+    "output_root": {
+      "type": "string",
+      "pattern": "\\S",
+      "description": "Run output directory; relative to the configuration file."
+    },
+    "fsa": {
+      "type": "string",
+      "pattern": "^\\s*[A-Za-z][0-9][A-Za-z]\\s*$",
+      "default": "H2M",
+      "description": "Runtime trims surrounding whitespace and converts to uppercase."
+    },
+    "connect_timeout_seconds": { "$ref": "#/$defs/positiveTimeout", "default": 10 },
+    "preprocess_read_timeout_seconds": { "$ref": "#/$defs/positiveTimeout", "default": 7200 },
+    "download_read_timeout_seconds": { "$ref": "#/$defs/positiveTimeout", "default": 120 },
+    "uniquification_read_timeout_seconds": { "$ref": "#/$defs/positiveTimeout", "default": 300 },
+    "cleanup_outputs": { "type": "boolean", "default": true },
+    "keep_outputs": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "\\S" },
+      "default": [],
+      "description": "Additional GIS Cities output keys. Runtime trims and deduplicates keys; GIS Cities validates supported key names. A nonempty list requires cleanup_outputs=true (the default)."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": ["keep_outputs"],
+        "properties": { "keep_outputs": { "minItems": 1 } }
+      },
+      "then": { "properties": { "cleanup_outputs": { "const": true } } }
+    }
+  ],
+  "$defs": {
+    "serviceUrl": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https?://[^\\s/?#@\\\\]+(?:/[^\\s?#\\\\]*)?$",
+      "description": "HTTP(S) base URL, optionally with a path prefix; no credentials, whitespace, query, or fragment. Runtime also validates hostname and port."
+    },
+    "positiveTimeout": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "description": "Positive finite seconds. Read timeouts measure socket inactivity, not a total run deadline."
+    }
+  }
+}
