@@ -23,6 +23,7 @@ from enum import Enum
 from time import perf_counter
 
 from sabu_chassis.logging import get_logger
+from sabu_chassis.logging.context import get_request_id, set_request_id
 
 from .artifacts import ArtifactError, get_artifact_store
 
@@ -81,9 +82,12 @@ def _execute_component_worker(
         component_name,
         mode,
         fsa,
-        non_null_required_fields):
+        non_null_required_fields,
+        request_id=None):
     """Execute one component inside a disposable spawned process."""
     qgis_application = None
+    previous_request_id = get_request_id()
+    set_request_id(request_id or previous_request_id)
     try:
         from ..logging_setup import configure_service_logging
 
@@ -97,7 +101,10 @@ def _execute_component_worker(
             cleanup_outputs=False,
             keep_outputs=None)
     finally:
-        _shutdown_worker_qgis(qgis_application)
+        try:
+            _shutdown_worker_qgis(qgis_application)
+        finally:
+            set_request_id(previous_request_id)
 
 
 def _run_component_in_fresh_process(
@@ -115,7 +122,8 @@ def _run_component_in_fresh_process(
             component_name,
             mode,
             fsa,
-            non_null_required_fields)
+            non_null_required_fields,
+            get_request_id())
         return future.result()
 
 
