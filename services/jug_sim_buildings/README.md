@@ -49,8 +49,12 @@ The installed factory is also available as
 
 Logging uses the installed `sabu-chassis>=0.1.1` dependency. The default
 service name is `sim_buildings-api`. Console output and rotating JSON file
-output use the chassis configuration. The default file is
-`logs/jug_sim_buildings.log` relative to the startup working directory.
+output use the chassis configuration. In a checkout, the default file is
+`services/jug_sim_buildings/logs/jug_sim_buildings.log`, independent of the
+startup working directory. Installed wheels default to
+`%LOCALAPPDATA%/Sabu/jug_sim_buildings/logs/jug_sim_buildings.log` on Windows,
+or `~/.local/state/Sabu/jug_sim_buildings/logs/jug_sim_buildings.log` otherwise.
+Deployments should explicitly set `LOG_DIR_BASE` to their persistent log location.
 
 Set `LOG_DIR_BASE` and/or `LOG_FILE_NAME` to change the destination.
 Existing `LOG_SERVICE`, `LOG_ENV`, `LOG_LEVEL`, `LOG_FILE_LEVEL`,
@@ -60,6 +64,12 @@ settings are honored by chassis.
 Requests use `X-Request-ID`, then `X-Correlation-ID`, then a generated ID.
 Responses include `X-Request-ID`; access and exception logs carry the same
 ID. Request teardown restores the prior correlation context.
+
+Scenario results are saved under `<output_root>/<FSA>/<run_id>/`. Completion
+output includes the FSA, run ID, run directory, and full `retained.geojson` path.
+Existing UUID-only run directories are preserved. The shared GIS dependency
+baseline and its LCA compatibility limits are described in
+[`deploy/constraints`](../../deploy/constraints/README.md).
 
 ## Verify
 

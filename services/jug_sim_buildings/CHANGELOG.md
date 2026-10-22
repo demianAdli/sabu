@@ -21,6 +21,10 @@
 - Focused foundation tests and installation/startup instructions.
 
 ### Changed
+- Resolve checkout logs from the service root, with a user-state fallback for
+  installed wheels and preserved explicit LOG_* overrides.
+- Group new run artifacts by FSA and expose the full retained-output path;
+  include FSA in scenario stage/completion logs and preserve legacy directories.
 - Moved the scenario configuration example to `contracts/examples/jug_sim_buildings/`,
   updated references, and removed it from service source-distribution packaging.
 - Replaced the empty `contracts/openapi/jug_sim.yaml` placeholder with
