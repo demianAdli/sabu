@@ -3,6 +3,15 @@
 ## [Unreleased]
 
 ### Added
+- Scenario_001 CLI and Flask-independent workflow for Montreal FSA preprocessing,
+  artifact download, and provincial-ID uniquification through upstream APIs.
+- Configurable service URLs, H2M FSA default, timeouts, run output root, and
+  forwarded GIS Cities cleanup/keep-output settings (cleanup enabled by default).
+- Correlated per-run response evidence, preserved input/retained GeoJSON, source
+  IDs and CRS information, positional record mappings, reconciliation, whole-run
+  counts, and bounded duplicate-group inspection using the existing selector policy.
+- Scoped temporary-file cleanup and failure preservation, controlled HTTP tests,
+  configuration example, and operational/real-run instructions with contract gaps.
 - Flask API factory, WSGI and module entrypoints, process health, and OpenAPI schemas.
 - Flask-independent application boundary and reserved `scenario_001` package.
 - Service logging defaults using sabu-chassis, correlated access/error logs,

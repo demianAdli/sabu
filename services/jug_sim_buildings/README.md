@@ -1,8 +1,19 @@
 # jug_sim_buildings
 
-Foundation for Sabu's building carbon emissions simulation service.
-Supports Python 3.10–3.12. The `scenario_001` package reserves a boundary;
-scenario execution is not implemented.
+Sabu's building carbon emissions simulation service, supporting Python 3.10–3.12.
+The foundation API provides health and logging support. `scenario_001` runs the
+initial Montreal FSA preprocessing/download/uniquification workflow through two
+upstream HTTP APIs and preserves artifacts and positional provenance per run.
+
+From the repository root after installation, run:
+
+```powershell
+python -m jug_sim_buildings.scenario_001 --config services/jug_sim_buildings/examples/scenario_001.json
+```
+
+This command executes real preprocessing; configure the upstream services first.
+Normal scenario runs request upstream cleanup. No GIS execution happens during
+imports, `--help`, foundation API startup, or health requests.
 
 ## Install and run
 
