@@ -12,7 +12,7 @@
     "output_root": {
       "type": "string",
       "pattern": "\\S",
-      "description": "Run output directory; relative to the configuration file."
+      "description": "Output root; relative to the configuration file. New runs use <output_root>/<FSA>/<run_id>/; existing directories are preserved."
     },
     "fsa": {
       "type": "string",
