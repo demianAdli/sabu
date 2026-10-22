@@ -37,11 +37,11 @@ class ScenarioRunError(RuntimeError):
 
 def run_scenario(config, *, transport=None, run_id=None):
     """Run synchronously; injected transports remain owned by the caller."""
-    artifacts = RunArtifacts(config.output_root, run_id)
+    artifacts = RunArtifacts(config.output_root, run_id, fsa=config.fsa)
     previous_id = get_request_id()
     set_request_id(artifacts.run_id)
     state = {
-        'scenario': 'scenario_001', 'run_id': artifacts.run_id,
+        'scenario': 'scenario_001', 'run_id': artifacts.run_id, 'fsa': config.fsa,
         'request_id': artifacts.run_id, 'parent_request_id': previous_id,
         'started_at': utc_now(), 'status': 'running', 'stage': 'initializing',
         'configuration': config.as_dict(), 'artifacts': {},
@@ -58,7 +58,8 @@ def run_scenario(config, *, transport=None, run_id=None):
     def stage(name):
         state['stage'] = name
         artifacts.write_json('run.json', state)
-        logger.info('scenario_stage', extra={'run_id': artifacts.run_id, 'stage': name})
+        logger.info('scenario_stage', extra={
+            'run_id': artifacts.run_id, 'fsa': config.fsa, 'stage': name})
 
     def remember(relative):
         state['artifacts'][relative] = file_digest(artifacts.path(relative))
@@ -150,7 +151,9 @@ def run_scenario(config, *, transport=None, run_id=None):
         primary_error = exc
         state['status'] = 'failed'
         state['error'] = {'type': type(exc).__name__, 'message': str(exc), 'stage': state['stage']}
-        logger.exception('scenario_failed', extra={'run_id': artifacts.run_id, 'stage': state['stage']})
+        logger.exception('scenario_failed', extra={
+            'run_id': artifacts.run_id, 'fsa': config.fsa, 'stage': state['stage'],
+            'run_directory': str(artifacts.directory)})
     finally:
         if transport is None and client is not None:
             try:
@@ -193,10 +196,14 @@ def run_scenario(config, *, transport=None, run_id=None):
             try:
                 if primary_error is None:
                     logger.info('scenario_completed', extra={
-                        'run_id': artifacts.run_id, 'status': state['status']})
+                        'run_id': artifacts.run_id, 'fsa': config.fsa, 'status': state['status'],
+                        'run_directory': str(artifacts.directory),
+                        'retained_path': str(artifacts.path('retained.geojson'))})
             finally:
                 set_request_id(previous_id)
     if primary_error is not None:
         raise ScenarioRunError(artifacts.directory, state['error']['stage'], primary_error) from primary_error
-    return {'run_id': artifacts.run_id, 'run_directory': str(artifacts.directory),
+    return {'run_id': artifacts.run_id, 'fsa': config.fsa,
+            'run_directory': str(artifacts.directory),
+            'retained_path': str(artifacts.path('retained.geojson')),
             'status': state['status'], 'counts': state['counts']}

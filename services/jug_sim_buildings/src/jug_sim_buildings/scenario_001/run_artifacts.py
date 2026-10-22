@@ -32,13 +32,20 @@ def file_digest(path):
 class RunArtifacts:
     """Own one new directory; cleanup only files explicitly tracked as temporary."""
 
-    def __init__(self, output_root, run_id=None):
+    def __init__(self, output_root, run_id=None, *, fsa):
+        if not isinstance(fsa, str) or not re.fullmatch(r'[A-Z][0-9][A-Z]', fsa):
+            raise ValueError('fsa must be a normalized Canadian FSA.')
+        self.fsa = fsa
         self.run_id = uuid4().hex if run_id is None else run_id
         if not isinstance(self.run_id, str) or not re.fullmatch(r'[0-9a-f]{32}', self.run_id):
             raise ValueError('run_id must be 32 lowercase hexadecimal characters.')
         root = Path(output_root).resolve()
         root.mkdir(parents=True, exist_ok=True)
-        self.directory = root / self.run_id
+        fsa_root = root / fsa
+        if fsa_root.resolve() != fsa_root:
+            raise ValueError('Refusing a linked or redirected FSA directory.')
+        fsa_root.mkdir(exist_ok=True)
+        self.directory = fsa_root / self.run_id
         self.directory.mkdir()  # Existing runs are never reused or overwritten.
         self._temporary = set()
         for name in ('input', 'requests', 'responses', 'reports', 'evidence', 'tmp'):
