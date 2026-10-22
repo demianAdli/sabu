@@ -115,7 +115,7 @@ class TestScenarioWorkflow(unittest.TestCase):
                 self.assertEqual(get_request_id(), 'caller-context')
 
     def last_run(self):
-        directories = list(self.root.iterdir())
+        directories = list((self.root / 'H2M').iterdir())
         self.assertEqual(len(directories), 1)
         return directories[0]
 
@@ -126,6 +126,9 @@ class TestScenarioWorkflow(unittest.TestCase):
                                 ControlledResponse(original_input), json_response(result)])
         directory = Path(outcome['run_directory'])
         self.assertEqual(outcome['status'], 'succeeded')
+        self.assertEqual(outcome['fsa'], 'H2M')
+        self.assertEqual(directory.parent, self.root / 'H2M')
+        self.assertEqual(Path(outcome['retained_path']), directory / 'retained.geojson')
         self.assertEqual([c['method'] for c in self.calls], ['POST', 'GET', 'POST'])
         self.assertEqual([c['url'] for c in self.calls], [
             'http://cities/api/components/mtl_fsa_gisoo/runs',

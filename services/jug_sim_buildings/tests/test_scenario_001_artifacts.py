@@ -19,14 +19,30 @@ from jug_sim_buildings.scenario_001.run_artifacts import RunArtifacts
 
 
 class TestRunArtifacts(unittest.TestCase):
+    def test_fsa_grouping_keeps_reruns_and_legacy_directories_separate(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            legacy = root / ('c' * 32)
+            legacy.mkdir()
+            (legacy / 'retained.geojson').write_text('legacy input')
+            first = RunArtifacts(root, 'a' * 32, fsa='H2M')
+            second = RunArtifacts(root, 'a' * 32, fsa='H3H')
+            rerun = RunArtifacts(root, fsa='H2M')
+            self.assertEqual(first.directory, root / 'H2M' / ('a' * 32))
+            self.assertEqual(second.directory, root / 'H3H' / ('a' * 32))
+            self.assertNotEqual(first.directory, rerun.directory)
+            self.assertEqual((legacy / 'retained.geojson').read_text(), 'legacy input')
+            with self.assertRaises(ValueError):
+                RunArtifacts(root, fsa='../escape')
+
     def test_cleanup_preserves_required_outputs_completed_runs_and_external_artifacts(self):
         with TemporaryDirectory() as directory:
             root = Path(directory)
             upstream = root / 'registered-upstream.geojson'
             upstream.write_bytes(b'upstream original')
-            older = RunArtifacts(root / 'runs')
+            older = RunArtifacts(root / 'runs', fsa='H2M')
             older.write_json('run.json', {'status': 'succeeded'})
-            current = RunArtifacts(root / 'runs')
+            current = RunArtifacts(root / 'runs', fsa='H2M')
             required = (
                 'input/standardized.geojson', 'retained.geojson', 'records.json',
                 'source_records.jsonl', 'statistics.json', 'source_crs.json', 'run.json',
@@ -48,7 +64,7 @@ class TestRunArtifacts(unittest.TestCase):
 
     def test_failed_download_is_quarantined_and_zero_length_scratch_is_removed(self):
         with TemporaryDirectory() as directory:
-            run = RunArtifacts(directory)
+            run = RunArtifacts(directory, fsa='H2M')
             run.temporary('download.part').write_bytes(b'partial download')
             run.temporary('uniquification-request.json').write_bytes(b'')
             self.assertEqual(run.cleanup(failed=True), [])
@@ -57,10 +73,10 @@ class TestRunArtifacts(unittest.TestCase):
 
     def test_existing_directory_and_path_escape_are_rejected_without_changes(self):
         with TemporaryDirectory() as directory:
-            run = RunArtifacts(directory, 'b' * 32)
+            run = RunArtifacts(directory, 'b' * 32, fsa='H2M')
             run.write_text('run.json', 'original')
             with self.assertRaises(FileExistsError):
-                RunArtifacts(directory, 'b' * 32)
+                RunArtifacts(directory, 'b' * 32, fsa='H2M')
             for value in ('../outside', 'C:/outside', '/outside'):
                 with self.subTest(value=value), self.assertRaises(ValueError):
                     run.path(value)
@@ -70,7 +86,7 @@ class TestRunArtifacts(unittest.TestCase):
 
     def test_redirected_scratch_parent_is_never_deleted(self):
         with TemporaryDirectory() as directory:
-            run = RunArtifacts(directory)
+            run = RunArtifacts(directory, fsa='H2M')
             path = run.temporary('scratch.tmp')
             path.write_bytes(b'sensitive evidence')
             original_resolve = Path.resolve
@@ -88,7 +104,7 @@ class TestRunArtifacts(unittest.TestCase):
 
     def test_cleanup_errors_preserve_locked_files_and_continue_other_cleanup(self):
         with TemporaryDirectory() as directory:
-            run = RunArtifacts(directory)
+            run = RunArtifacts(directory, fsa='H2M')
             locked = run.temporary('locked.tmp')
             locked.write_text('locked evidence')
             removable = run.temporary('removable.tmp')
@@ -108,7 +124,7 @@ class TestRunArtifacts(unittest.TestCase):
 
     def test_failed_quarantine_keeps_partial_download_in_place(self):
         with TemporaryDirectory() as directory:
-            run = RunArtifacts(directory)
+            run = RunArtifacts(directory, fsa='H2M')
             partial = run.temporary('download.part')
             partial.write_bytes(b'useful')
             with patch.object(Path, 'replace', side_effect=PermissionError('locked')):

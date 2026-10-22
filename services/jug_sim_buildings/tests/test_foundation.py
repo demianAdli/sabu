@@ -19,9 +19,16 @@ import unittest
 from unittest.mock import patch
 
 from jug_sim_buildings.__main__ import main
+from jug_sim_buildings.logging_setup import _default_log_base
 
 
 class TestFoundation(unittest.TestCase):
+    def test_installed_logging_uses_state_directory_not_cwd(self):
+        with TemporaryDirectory() as directory, patch.dict(os.environ, {'LOCALAPPDATA': directory}), \
+                patch('jug_sim_buildings.logging_setup.__file__',
+                      str(Path(directory) / 'Lib/site-packages/jug_sim_buildings/logging_setup.py')):
+            self.assertEqual(_default_log_base(), Path(directory) / 'Sabu/jug_sim_buildings')
+
     def run_python(self, arguments, directory):
         env = os.environ.copy()
         env.pop('PYTHONPATH', None)
@@ -65,25 +72,32 @@ class TestFoundation(unittest.TestCase):
             import logging
             import os
             from pathlib import Path
+            from unittest.mock import patch
             from sabu_chassis.logging.context import get_request_id
             from jug_sim_buildings.api import create_app
             for name in list(os.environ):
                 if name.startswith('LOG_'):
                     del os.environ[name]
-            app = create_app({'TESTING': True})
+            service_root = Path('checkout/jug_sim_buildings').resolve()
+            service_root.mkdir(parents=True)
+            (service_root / 'pyproject.toml').touch()
+            module_path = service_root / 'src/jug_sim_buildings/logging_setup.py'
+            with patch('jug_sim_buildings.logging_setup.__file__', str(module_path)):
+                app = create_app({'TESTING': True})
             response = app.test_client().get(
                 '/health', headers={'X-Request-ID': 'chassis-default'})
             assert response.status_code == 200
             assert get_request_id() == '-'
             logging.shutdown()
-            records = [json.loads(line) for line in Path(
-                'logs/jug_sim_buildings.log').read_text(
+            records = [json.loads(line) for line in (
+                service_root / 'logs/jug_sim_buildings.log').read_text(
                     encoding='utf-8').splitlines()]
             access = next(r for r in records if r['msg'] == 'http_request')
             assert access['service'] == 'sim_buildings-api'
             assert access['request_id'] == 'chassis-default'
             assert access['status'] == 200
             assert access['path'] == '/health'
+            assert not Path('logs').exists()
         """)
         with TemporaryDirectory() as directory:
             self.run_python(['-c', code], directory)
