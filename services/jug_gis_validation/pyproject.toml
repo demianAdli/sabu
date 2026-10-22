@@ -17,7 +17,7 @@ dependencies = [
   "flask==3.1.1",
   "flask-smorest==0.46.1",
   "geopandas",
-  "marshmallow",
+  "marshmallow>=3.24.1,<5",
   "matplotlib",
   "numpy",
   "pandas"
