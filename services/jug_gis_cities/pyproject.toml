@@ -17,13 +17,12 @@ dependencies = [
   "citygisoo>=0.2.1",
   "flask==3.1.1",            
   "flask-smorest==0.46.1",
-  "marshmallow",
+  "marshmallow>=3.24.1,<5",
   "sabu-chassis>=0.1.1",
   "geopandas",
   "shapely>=2",
   "pyproj",
-  "requests",
-  "geopandas",
+  "requests>=2.32,<3",
   "pandas"
 ]
 
