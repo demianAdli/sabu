@@ -1,4 +1,4 @@
-﻿openapi: 3.0.2
+openapi: 3.0.2
 info:
   title: JUG LCA Building API
   version: v1
@@ -14,8 +14,10 @@ info:
     Polygon and MultiPolygon geometries, including mixed collections, retain their parts and holes.
     Either ring winding direction is accepted. The reader orients an internal copy without changing
     coordinate values or source objects/files; the first ring is exterior and subsequent rings are holes.
-    Feature IDs must be unique integers. Reader identity omissions or duplicates fail the batch;
-    the pinned reader excludes footprints below 25 m2, so such inputs fail explicitly rather than shifting result attribution.
+    Feature IDs must be unique integers. Default requests fail on any reader omission.
+    With include_exclusions=true, documented exclusions are returned separately and remaining buildings
+    are calculated. Unexplained omissions and duplicate or unexpected identities still fail.
+    The existing reader floor-area minimum of 25 m2 is unchanged; input metrics are not recomputed.
     Component emissions are opening plus envelope subtotals; do not add those parts again.
     Coordinates must already be WGS84 longitude/latitude; CRS metadata does not trigger reprojection.
 servers:
@@ -28,6 +30,13 @@ paths:
       operationId: createBuildingEmissions
       tags: [Emissions]
       parameters:
+        - in: query
+          name: include_exclusions
+          required: false
+          description: Return versioned results, exclusions and counts; JSON only, incompatible with export=csv. Default false preserves strict array responses.
+          schema:
+            type: boolean
+            default: false
         - in: query
           name: export
           required: false
@@ -56,13 +65,15 @@ paths:
                     1,1,Building 1,123 Test St,Residential,12.5,1995,1.0,2.0,3.0,4.0,5.0,6.0,3.0,6.0,9.0
                     ,TOTAL,,,,,,,1.0,2.0,3.0,4.0,5.0,6.0,3.0,6.0,9.0
         '201':
-          description: Emissions calculated successfully. All emission values in the response are in kgCO2e.
+          description: Default identified results array, or ReaderOutcome with include_exclusions=true. Carbon values are kgCO2e; all-excluded outcomes have no calculated results.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EmissionResult'
+                oneOf:
+                  - type: array
+                    items:
+                      $ref: '#/components/schemas/EmissionResult'
+                  - $ref: '#/components/schemas/ReaderOutcome'
         '400':
           description: Bad request
           content:
@@ -87,6 +98,13 @@ paths:
       operationId: uploadBuildingEmissions
       tags: [Emissions]
       parameters:
+        - in: query
+          name: include_exclusions
+          required: false
+          description: Return versioned results, exclusions and counts; JSON only, incompatible with export=csv. Default false preserves strict array responses.
+          schema:
+            type: boolean
+            default: false
         - in: query
           name: export
           required: false
@@ -114,13 +132,15 @@ paths:
               schema:
                 type: string
         '201':
-          description: Emissions calculated successfully. All emission values in the response are in kgCO2e.
+          description: Default identified results array, or ReaderOutcome with include_exclusions=true. Carbon values are kgCO2e; all-excluded outcomes have no calculated results.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EmissionResult'
+                oneOf:
+                  - type: array
+                    items:
+                      $ref: '#/components/schemas/EmissionResult'
+                  - $ref: '#/components/schemas/ReaderOutcome'
         '400':
           description: Missing file or invalid JSON content in uploaded file
           content:
@@ -283,6 +303,60 @@ components:
           description: Total component end-of-life emissions in kgCO2e for one building.
           example: 6.0
       additionalProperties: true
+    ReaderExclusion:
+      type: object
+      required: [feature_id, reason_code, field, reason, reader_floor_area_m2, minimum_floor_area_m2]
+      properties:
+        feature_id:
+          type: integer
+        reason_code:
+          type: string
+          enum: [reader_floor_area_below_minimum]
+        field:
+          type: string
+          enum: [geometry]
+        reason:
+          type: string
+          minLength: 1
+        reader_floor_area_m2:
+          type: number
+          minimum: 0
+          maximum: 25
+          exclusiveMaximum: true
+          description: Actual combined reader floor area, including parts and holes; not an upstream stored area attribute.
+        minimum_floor_area_m2:
+          type: number
+          enum: [25]
+    ReaderOutcome:
+      type: object
+      description: Submitted IDs partition uniquely into results and exclusions. submitted = calculated + excluded. All-excluded batches return empty results; exclusions receive no carbon.
+      required: [schema_version, results, exclusions, counts]
+      properties:
+        schema_version:
+          type: integer
+          enum: [1]
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmissionResult'
+        exclusions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReaderExclusion'
+        counts:
+          type: object
+          additionalProperties: false
+          required: [submitted, calculated, excluded]
+          properties:
+            submitted:
+              type: integer
+              minimum: 0
+            calculated:
+              type: integer
+              minimum: 0
+            excluded:
+              type: integer
+              minimum: 0
     ErrorResponse:
       type: object
       properties:
