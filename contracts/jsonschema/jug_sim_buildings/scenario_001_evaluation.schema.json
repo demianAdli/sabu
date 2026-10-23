@@ -178,6 +178,39 @@
     },
     "timeout_policy": {
       "type": "string"
+    },
+    "lca_outcomes": {
+      "type": "object",
+      "required": [
+        "submitted",
+        "calculated",
+        "excluded"
+      ],
+      "properties": {
+        "submitted": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "calculated": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "excluded": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "description": "Completed LCA counts; null means unavailable, never inferred zero."
     }
   },
   "description": "Evidence for a single run. Success does not establish controlled failure-injection coverage or complete upstream provenance."
