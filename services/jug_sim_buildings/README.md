@@ -2,8 +2,8 @@
 
 Sabu's building carbon emissions simulation service, supporting Python 3.10–3.12.
 The foundation API provides health and logging support. `scenario_001` runs the
-initial Montreal FSA preprocessing/download/uniquification workflow through two
-upstream HTTP APIs and preserves artifacts and positional provenance per run.
+Montreal FSA preprocessing/download/uniquification workflow through two upstream
+HTTP APIs, with optional LCA preparation/submission and consolidated trace evidence.
 
 From the repository root after installation, run:
 
@@ -38,6 +38,44 @@ Repository-level [examples](../../contracts/examples/jug_sim_buildings/README.md
 [configuration schema](../../contracts/jsonschema/jug_sim_buildings/scenario_001_config.schema.json),
 and [OpenAPI specification](../../contracts/openapi/jug_sim_buildings.yaml) live
 under `contracts/`. Runtime schemas and response checks stay inside this service.
+
+## Complete H3B evaluation
+
+Set `preparation_enabled=true`, `lca_enabled=true`, and `lca_url` (for example
+`http://127.0.0.1:5103`) in a local copy of the scenario configuration. Run both
+GIS APIs and the LCA API before executing the scenario CLI. LCA remains in its
+own environment; do not install cerc-hub into the GIS/orchestrator environment.
+The current stage uses synchronous `POST /emissions`, with separate
+`lca_connect_timeout_seconds` (10) and `lca_read_timeout_seconds` (7200).
+It sends the exact final preparation GeoJSON, preserving its original bytes.
+LCA normalizes its own computation input according to its contract.
+
+Results must contain `feature_id` from the actual reader-created building.
+Missing, duplicate, or unexpected IDs, invalid numbers, or inconsistent component
+subtotals fail reconciliation. Equal counts or CSV position-based labels are not
+identity evidence. The minimal LCA change returns IDs and isolates old caches
+under a new namespace. Its pinned reader excludes footprints below 25 m2; that
+omission now fails explicitly. Preparation adds no area threshold.
+
+Runs preserve `requests/lca.geojson`, original `responses/lca.body` and HTTP
+metadata, `lca/results.json`, reconciliation and carbon summaries, plus
+`trace/records.jsonl`. Carbon units are kgCO2e; component values already include
+opening and envelope values. Removed duplicates do not receive separate carbon.
+`reports/stages.json`, `reports/provenance.json`, and `reports/evaluation.json`
+record the four evaluation criteria and their limitations, including failures.
+Timeouts do not establish upstream cancellation and never trigger automatic retries.
+
+An optional `evaluation_provenance_path` points to operator-supplied JSON containing
+service/library versions, source/data revisions, LCA evaluation-cache declarations,
+and references to correlated service logs. Relative paths resolve against the
+configuration file. Declarations are preserved, but do not verify remote versions
+or establish API-reported cache hits. Full cache provenance still requires the
+LCA evaluation manifest and correlated logs. A successful real run does not itself
+establish controlled failure-handling coverage.
+
+`--prepare-from-run` remains preparation only, even when submission is enabled.
+Cleanup removes owned scratch only. Payloads, responses, results, traces,
+preparation artifacts, registered upstream artifacts, and run directories remain.
 
 ## Install and run
 

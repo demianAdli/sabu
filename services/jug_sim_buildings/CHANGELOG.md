@@ -3,6 +3,12 @@
 ## [Unreleased]
 
 ### Added
+- Optional synchronous LCA submission of exact prepared GeoJSON with correlated
+  HTTP evidence, explicit timeouts, identified result reconciliation, and carbon
+  summaries in kgCO2e without double-counting component subtotals.
+- Consolidated source/uniquification/preparation/submission/result histories,
+  stage outcomes, provenance, and four-criterion evaluation reports.
+- Controlled H3B execution and injected-failure tests; separate real-run instructions.
 - Optional scenario_001 LCA preparation and existing-run CLI mode with independent
   eligibility/normalization, generated names, stable numeric IDs, and full positional
   lineage for accepted/rejected features. No LCA service or cerc-hub imports/submission.
