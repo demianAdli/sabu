@@ -1,0 +1,46 @@
+{
+  "example_note": "Illustrative structure only; not a measured H3B result.",
+  "schema_version": 1,
+  "run_id": "00000000000000000000000000000000",
+  "fsa": "H3B",
+  "status": "failed",
+  "criteria": {
+    "end_to_end_execution": {
+      "status": "failed",
+      "evidence": [
+        "run.json",
+        "reports/stages.json"
+      ]
+    },
+    "contract_compliance": {
+      "status": "incomplete",
+      "evidence": [
+        "run.json",
+        "reports/stages.json"
+      ]
+    },
+    "traceability": {
+      "status": "incomplete",
+      "evidence": [
+        "run.json",
+        "reports/stages.json"
+      ]
+    },
+    "failure_handling": {
+      "status": "failure_recorded",
+      "evidence": [
+        "run.json",
+        "reports/stages.json"
+      ]
+    }
+  },
+  "error": {
+    "stage": "lca_submission",
+    "type": "TransportError",
+    "message": "Illustrative read timeout; upstream cancellation unknown."
+  },
+  "cleanup_errors": [],
+  "provenance": "reports/provenance.json",
+  "artifacts": {},
+  "timeout_policy": "No automatic processing retries; timeout does not establish upstream cancellation."
+}

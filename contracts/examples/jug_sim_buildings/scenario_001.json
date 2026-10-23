@@ -10,5 +10,10 @@
   "cleanup_outputs": true,
   "keep_outputs": [],
   "preparation_enabled": false,
-  "preparation_measurement_crs": "EPSG:2950"
+  "preparation_measurement_crs": "EPSG:2950",
+  "lca_enabled": false,
+  "lca_url": "http://127.0.0.1:5103",
+  "lca_connect_timeout_seconds": 10,
+  "lca_read_timeout_seconds": 7200,
+  "evaluation_provenance_path": null
 }
