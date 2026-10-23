@@ -3,6 +3,9 @@
 ## [Unreleased]
 
 ### Added
+- Explicit LCA reader exclusions with measured reasons, disjoint result/exclusion
+  ID reconciliation, per-record histories and calculated-only carbon summaries.
+  Preserve all-excluded evidence without reporting zero carbon as a successful run.
 - Optional synchronous LCA submission of exact prepared GeoJSON with correlated
   HTTP evidence, explicit timeouts, identified result reconciliation, and carbon
   summaries in kgCO2e without double-counting component subtotals.

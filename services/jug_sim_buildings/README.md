@@ -45,20 +45,25 @@ Set `preparation_enabled=true`, `lca_enabled=true`, and `lca_url` (for example
 `http://127.0.0.1:5103`) in a local copy of the scenario configuration. Run both
 GIS APIs and the LCA API before executing the scenario CLI. LCA remains in its
 own environment; do not install cerc-hub into the GIS/orchestrator environment.
-The current stage uses synchronous `POST /emissions`, with separate
+The current stage uses synchronous `POST /emissions?include_exclusions=true`, with separate
 `lca_connect_timeout_seconds` (10) and `lca_read_timeout_seconds` (7200).
 It sends the exact final preparation GeoJSON, preserving its original bytes.
 LCA normalizes its own computation input according to its contract.
 
 Results must contain `feature_id` from the actual reader-created building.
-Missing, duplicate, or unexpected IDs, invalid numbers, or inconsistent component
+Unexplained missing, duplicate, or unexpected IDs, invalid numbers, or inconsistent component
 subtotals fail reconciliation. Equal counts or CSV position-based labels are not
 identity evidence. The minimal LCA change returns IDs and isolates old caches
-under a new namespace. Its pinned reader excludes footprints below 25 m2; that
-omission now fails explicitly. Preparation adds no area threshold.
+under a separate namespace. The opt-in response partitions submitted IDs into
+`results` and `exclusions`, with counts requiring submitted = calculated + excluded.
+The reader's actual floor-area exclusions below 25 m2 are recorded with measurements
+and reasons. Preparation adds no area threshold; unknown exclusions still fail.
+If every submitted building is excluded, the scenario preserves the decisions and
+fails clearly without publishing a zero-carbon summary. Default LCA clients retain
+strict array responses; the expanded response is JSON only.
 
 Runs preserve `requests/lca.geojson`, original `responses/lca.body` and HTTP
-metadata, `lca/results.json`, reconciliation and carbon summaries, plus
+metadata, `lca/results.json`, `lca/exclusions.json`, reconciliation and carbon summaries, plus
 `trace/records.jsonl`. Carbon units are kgCO2e; component values already include
 opening and envelope values. Removed duplicates do not receive separate carbon.
 `reports/stages.json`, `reports/provenance.json`, and `reports/evaluation.json`
