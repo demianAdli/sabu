@@ -329,16 +329,35 @@ Release flow:
 JSON results include `feature_id`, the original integer GeoJSON ID verified
 against the actual reader-created building used for calculation. Input IDs must
 be unique. Results can be joined by ID regardless of order; counts alone are not
-identity evidence. Reader omissions, duplicate identities, and unexpected IDs
-fail the batch before enrichment. The pinned cerc-hub reader excludes footprints
-below 25 m2; this policy is unchanged and its omissions now fail explicitly.
+identity evidence. By default, reader omissions, duplicate identities, and
+unexpected IDs fail the batch before enrichment. The pinned cerc-hub reader's
+floor-area minimum of 25 m2 is unchanged.
 No substitute ID or positional match is manufactured.
+
+Both JSON endpoints accept `?include_exclusions=true` to calculate remaining
+buildings and return `{schema_version: 1, results: [...], exclusions: [...], counts: {...}}`.
+Each submitted ID must appear exactly once in results or exclusions; submitted =
+calculated + excluded. Each exclusion includes its ID, reason code/text, field,
+actual `reader_floor_area_m2`, and `minimum_floor_area_m2` (25). Evidence comes
+from the combined reader building, including multipart geometry and holes, not
+from stored source-area attributes. Unexplained omissions still fail.
+All-excluded batches return HTTP 201 with empty results and explicit exclusions;
+the orchestrator treats this as no buildings remaining for calculation. Combining
+this option with `export=csv` returns HTTP 400. Default/false requests retain the
+existing strict array and CSV behavior. Geometry and carbon formulas are unchanged.
 
 The cache namespace is `jug_lca_buildings_emissions_v3_identified`; old cache files
 remain intact and are not reused as identified results. Full cache/code/catalogue
 provenance is still available through evaluation manifests and correlated service
 logs, not the JSON response. The CSV exporter still associates metadata by input
 position; use identified JSON results for scenario traceability.
+
+Opt-in outcomes use a separate `_reader_exclusions_v1` namespace suffix and
+`reader_outcome.json`, storing results, exclusions and counts atomically together.
+Strict cache entries are not adopted as exclusion-aware evidence, and historical
+artifacts are not deleted. Corrupt cached partitions fail without recomputation.
+For evaluation, declare `include_exclusions=true` in calculation settings when
+that mode is used; the effective namespace/counts appear in cache metadata.
 
 When testing the checkout without reinstalling a published package, set
 `$env:PYTHONPATH = (Resolve-Path .\src).Path` from this service directory

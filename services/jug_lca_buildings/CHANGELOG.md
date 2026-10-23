@@ -10,6 +10,10 @@
   retain their files without deletion. Package version is unchanged.
 
 ### Added
+- Opt-in `include_exclusions=true` JSON outcomes on both emissions endpoints,
+  preserving strict default behavior and the reader's existing 25 m2 floor-area
+  policy. Record actual combined reader measurements, IDs and exclusion reasons;
+  isolate and validate outcome caches without deleting historical artifacts.
 - Add opt-in evaluation cache preparation through `JUG_LCA_ARTIFACTS_DIR`, recording declared source/reference-data provenance and installed software versions, with explicit verification for reuse and no deletion of existing artifacts.
 - Log calculation and CSV cache outcomes with full request hashes and resolved cache directories for evaluation provenance without changing API responses or cache keys.
 - Support Polygon and MultiPolygon coordinate layouts, including mixed collections, through shared direct/API validation with structured errors for unsupported geometry types or incorrect coordinate nesting.
