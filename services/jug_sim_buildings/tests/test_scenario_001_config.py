@@ -25,6 +25,27 @@ from jug_sim_buildings.scenario_001.__main__ import main
 
 
 class TestScenarioConfig(unittest.TestCase):
+    def test_preparation_options_and_explicit_existing_run_dispatch(self):
+        for values in ({'preparation_enabled': 'true'},
+                       {'preparation_source_crs': 'EPSG:4617'},
+                       {'preparation_source_crs_evidence': 'verified metadata'},
+                       {'preparation_measurement_crs': None},
+                       {'preparation_coordinate_operation': ''}):
+            with self.subTest(values=values), self.assertRaises(ValueError):
+                self.config(**values)
+        config = self.config(preparation_source_crs='EPSG:4617',
+                             preparation_source_crs_evidence='Independent data provenance record')
+        self.assertFalse(config.preparation_enabled)
+        with patch.object(ScenarioConfig, 'from_file', return_value=config), \
+                patch('jug_sim_buildings.logging_setup.configure_service_logging'), \
+                patch('jug_sim_buildings.scenario_001.preparation.prepare_run',
+                      return_value={'status': 'succeeded'}) as prepare, \
+                patch('jug_sim_buildings.scenario_001.workflow.run_scenario') as run, \
+                contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(main(['--config', 'config.json', '--prepare-from-run', 'existing']), 0)
+            prepare.assert_called_once_with('existing', config)
+            run.assert_not_called()
+
     def config(self, **overrides):
         values = dict(gis_cities_url='http://cities/api/',
                       gis_validation_url='http://validation/', output_root='output_files/runs')

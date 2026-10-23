@@ -83,6 +83,49 @@ def json_response(value, status=200):
 
 
 class TestScenarioWorkflow(unittest.TestCase):
+    def test_enabled_preparation_preflights_before_http_and_runs_after_preservation(self):
+        from dataclasses import replace
+        preprocessing, collection, result = workflow_fixture()
+        self.config = replace(self.config, preparation_enabled=True)
+        observed = []
+
+        def prepare(directory, config, **kwargs):
+            observed.append(load_json(directory / 'run.json')['stage'])
+            self.assertTrue((directory / 'retained.geojson').exists())
+            self.assertTrue((directory / 'reports/duplicates.json').exists())
+            raise RuntimeError('controlled export failure')
+
+        with patch('jug_sim_buildings.scenario_001.reprojection.check_capability') as preflight, \
+                patch('jug_sim_buildings.scenario_001.preparation.prepare_run', side_effect=prepare):
+            with self.assertRaisesRegex(ScenarioRunError, 'controlled export failure'):
+                self.execute([json_response(preprocessing, 201), json_response(collection),
+                              json_response(result)])
+        preflight.assert_called_once_with()
+        self.assertEqual(len(self.calls), 3)
+        self.assertEqual(observed, ['preparation'])
+        self.assertEqual(load_json(self.last_run() / 'run.json')['status'], 'failed')
+
+    def test_missing_preparation_capability_stops_before_preprocessing(self):
+        from dataclasses import replace
+        self.config = replace(self.config, preparation_enabled=True)
+        with patch('jug_sim_buildings.scenario_001.reprojection.check_capability',
+                   side_effect=RuntimeError('reproject_layer missing')):
+            with self.assertRaisesRegex(ScenarioRunError, 'reproject_layer missing'):
+                self.execute([])
+        self.assertEqual(self.calls, [])
+
+    def test_successful_preparation_is_exposed_in_run_result_and_metadata(self):
+        from dataclasses import replace
+        preprocessing, collection, result = workflow_fixture()
+        self.config = replace(self.config, preparation_enabled=True)
+        preparation = {'status': 'succeeded', 'lca_input_path': '/prepared/lca_input.geojson'}
+        with patch('jug_sim_buildings.scenario_001.reprojection.check_capability'), \
+                patch('jug_sim_buildings.scenario_001.preparation.prepare_run', return_value=preparation):
+            outcome = self.execute([json_response(preprocessing, 201), json_response(collection),
+                                    json_response(result)])
+        self.assertEqual(outcome['preparation'], preparation)
+        self.assertEqual(load_json(self.last_run() / 'run.json')['preparation'], preparation)
+
     def setUp(self):
         self.temporary = TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
