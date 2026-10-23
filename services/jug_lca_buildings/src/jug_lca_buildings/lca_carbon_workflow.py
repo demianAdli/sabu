@@ -11,6 +11,7 @@ www.demianadli.com
 import logging
 import json
 import os
+from math import isfinite
 from pathlib import Path
 from time import perf_counter
 
@@ -45,7 +46,8 @@ class LCACarbonWorkflow:
           archetypes_catalog_file_name,
           constructions_catalog_file,
           catalog='nrcan',
-          building_parameters=('height', 'year_of_construction', 'function')):
+          building_parameters=('height', 'year_of_construction', 'function'),
+          *, include_exclusions=False):
     """
       LCACarbonWorkflow takes a number of buildings and enrich the city object
       using cerc-hub GeometryFactory and ConstructionFactory. Then it
@@ -111,12 +113,16 @@ class LCACarbonWorkflow:
     self.height, self.year_of_construction, self.function = \
         building_parameters
     self.progress_log_every = _env_int('LCA_PROGRESS_LOG_EVERY', 100)
+    if type(include_exclusions) is not bool:
+      raise ValueError('include_exclusions must be a boolean.')
+    self.include_exclusions = include_exclusions
+    self.reader_exclusions = []
 
     logger.info('Calculation started...')
 
     try:
       city_t0 = perf_counter()
-      self.city = GeometryFactory(
+      geometry_factory = GeometryFactory(
                 'geojson',
                 path=self.file_path,
                 height_field=self.height,
@@ -124,7 +130,10 @@ class LCACarbonWorkflow:
                 function_field=self.function,
                 function_to_hub=Dictionaries().
                 montreal_function_to_hub_function
-            ).city
+            )
+      self.city = geometry_factory.city
+      if include_exclusions:
+        self.reader_exclusions = geometry_factory.reader_exclusions
       logger.info(f'City was created from {self.file_path}')
       logger.info(
         f'City geometry parsing took {perf_counter() - city_t0:.3f}s')
@@ -142,8 +151,21 @@ class LCACarbonWorkflow:
     if any(type(identifier) is not int for identifier in ids) or len(set(ids)) != len(ids):
       raise ValueError('LCA requires unique integer feature IDs for reliable result identification.')
     self.submitted_feature_ids = {str(identifier): identifier for identifier in ids}
+    self.exclusions = []
+    if include_exclusions:
+      for exclusion in self.reader_exclusions:
+        name = exclusion['reader_name']
+        if name not in self.submitted_feature_ids:
+          raise ValueError('Unexpected reader exclusion identity.')
+        self.exclusions.append({key: value for key, value in exclusion.items() if key != 'reader_name'})
+        self.exclusions[-1]['feature_id'] = self.submitted_feature_ids[name]
     self._reader_feature_ids()
-    ConstructionFactory(self.handler, self.city).enrich()
+    if include_exclusions:
+      logger.info('lca_reader_exclusions', extra={
+        'excluded_count': len(self.exclusions),
+        'excluded_feature_ids': [row['feature_id'] for row in self.exclusions]})
+    if self.city.buildings:
+      ConstructionFactory(self.handler, self.city).enrich()
     logger.info(
       f'Construction enrichment took {perf_counter() - enrich_t0:.3f}s')
 
@@ -160,12 +182,24 @@ class LCACarbonWorkflow:
   def _reader_feature_ids(self):
     """Join actual reader identities, never input/reader array positions.
 
-    cerc-hub 0.2.0.8 omits footprints smaller than 25 square metres.
-    Preserve that policy, but fail the batch rather than silently lose records.
+    Accept only evidenced omissions in opt-in mode. All other omissions and
+    all strict-mode omissions fail without changing the reader's policy.
     """
     names = [str(building.name) for building in self.city.buildings]
     expected = self.submitted_feature_ids
-    missing = sorted(set(expected) - set(names))
+    excluded_names = set()
+    if getattr(self, 'include_exclusions', False):
+      for exclusion in self.exclusions:
+        identifier = exclusion.get('feature_id')
+        name = str(identifier)
+        area = exclusion.get('reader_floor_area_m2')
+        if (type(identifier) is not int or name not in expected or name in excluded_names
+            or name in names or exclusion.get('reason_code') != 'reader_floor_area_below_minimum'
+            or type(area) not in (int, float) or not isfinite(area)
+            or not 0 <= area < 25 or exclusion.get('minimum_floor_area_m2') != 25):
+          raise ValueError('Invalid or unexplained reader exclusion.')
+        excluded_names.add(name)
+    missing = sorted(set(expected) - set(names) - excluded_names)
     unexpected = sorted(set(names) - set(expected))
     if len(set(names)) != len(names) or missing or unexpected:
       raise ValueError(
@@ -336,7 +370,7 @@ class LCACarbonWorkflow:
       which hold the final results. These attributes are mentioned in the
       constructor method description.
     """
-    reader_ids = self._reader_feature_ids()
+    self._reader_feature_ids()
     self.building_feature_ids = []
     building_count = 1
     total_buildings = len(self.city.buildings)
@@ -364,7 +398,7 @@ class LCACarbonWorkflow:
         opening_end_of_life_emission)
       self.building_component_end_of_life_emission.append(
         component_end_of_life_emission)
-      self.building_feature_ids.append(reader_ids[building_count - 1])
+      self.building_feature_ids.append(self.submitted_feature_ids[str(building.name)])
       building_count += 1
     elapsed_s = perf_counter() - calc_t0
     if total_buildings:
