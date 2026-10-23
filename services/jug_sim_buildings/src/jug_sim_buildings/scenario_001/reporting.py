@@ -25,6 +25,8 @@ def completion_text(state):
             f'Preparation: {preparation or "not completed; inspect preparation evidence"}.\n\n'
             f'LCA: {lca.get("status", "not completed or not requested")}; '
             f'submitted: {lca.get("submitted", "unknown")}; returned: {lca.get("returned", "unknown")}.\n\n'
+            f'LCA reader exclusions: {lca.get("excluded", state.get("trace", {}).get("lca_exclusions", "unknown"))}; '
+            'documented record exclusions are distinct from stage failures.\n\n'
             f'Carbon summary: {summary or "unavailable"}.\n\n'
             f'Processing error (not a record exclusion): {state.get("error", "none")}.\n\n'
             'See trace/records.jsonl and reports/evaluation.json for evidence and limitations.\n')

@@ -166,6 +166,8 @@ def run_scenario(config, *, transport=None, run_id=None):
             from .lca_submission import submit_prepared
             stage('lca_payload')
             state['lca'] = submit_prepared(artifacts, state['preparation'], config, client, stage)
+            logger.info('scenario_lca_outcomes', extra={
+                'run_id': artifacts.run_id, 'calculated': state['lca']['calculated'], 'excluded': state['lca']['excluded']})
         stage('traceability')
         state['trace'] = write_trace(artifacts, state)
         state['status'] = ('succeeded_with_cleanup_errors' if state.get('preparation', {}).get('status')

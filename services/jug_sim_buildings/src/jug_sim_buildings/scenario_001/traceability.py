@@ -27,7 +27,7 @@ def write_trace(artifacts, state):
     records_path = artifacts.path('records.json')
     records = load_json(records_path) if records_path.exists() else []
     require(not records or len(records) == len(sources), 'Trace source/uniquification count mismatch.')
-    mappings, results, submitted = {}, {}, set()
+    mappings, results, excluded, submitted = {}, {}, {}, set()
     preparation = state.get('preparation')
     attempt = Path(preparation['preparation_directory']) if preparation else None
     if attempt is None and state.get('error', {}).get('stage') == 'preparation':
@@ -63,10 +63,17 @@ def write_trace(artifacts, state):
         require(submitted == {m['prepared_id'] for m in mappings.values() if m['status'] == 'accepted'},
                 'Trace submitted/accepted ID mismatch.')
     result_path = artifacts.path('lca/results.json')
+    exclusion_path = artifacts.path('lca/exclusions.json')
+    if exclusion_path.exists():
+        values = load_json(exclusion_path)
+        require(all(isinstance(row, dict) and type(row.get('feature_id')) is int for row in values), 'Invalid trace LCA exclusions.')
+        excluded = {row['feature_id']: {'exclusion_index': index, 'exclusion': row} for index, row in enumerate(values)}
+        require(len(excluded) == len(values) and set(excluded) <= submitted, 'Trace exclusion ID mismatch.')
     if result_path.exists():
         values = load_json(result_path)
         results = {r['feature_id']: index for index, r in enumerate(values)}
-        require(len(results) == len(values) and set(results) == submitted, 'Trace result ID mismatch.')
+        require(len(results) == len(values) and not set(results) & set(excluded)
+                and set(results) | set(excluded) == submitted, 'Trace result/exclusion ID mismatch.')
     rows = []
     for position, source in enumerate(sources):
         require(source['input_position'] == position and source['run_id'] == artifacts.run_id,
@@ -92,20 +99,25 @@ def write_trace(artifacts, state):
                 identifier = mapping['prepared_id']
                 if record['status'] == 'retained' and identifier in submitted:
                     row['lca'] = {'submitted_id': identifier,
-                                  'status': 'result_received' if identifier in results else 'unresolved',
+                                  'status': 'result_received' if identifier in results else 'excluded' if identifier in excluded else 'unresolved',
                                   'result_index': results.get(identifier),
                                   'result_artifact': 'lca/results.json' if identifier in results else None}
+                    if identifier in excluded:
+                        row['lca'].update(exclusion_artifact='lca/exclusions.json', **excluded[identifier])
         rows.append(row)
     if mappings:
         all_members = [member['input_position'] for mapping in mappings.values() for member in mapping['input_records']]
         require(sorted(all_members) == list(range(len(sources))), 'Trace preparation members do not partition input.')
     if state.get('lca', {}).get('status') == 'succeeded':
-        require(sum(row['lca'] is not None for row in rows) == len(submitted) == len(results),
+        require(sum(row['lca'] is not None for row in rows) == len(submitted) == len(results) + len(excluded),
                 'Trace does not account for every submitted building.')
     artifacts.write_json_lines('trace/records.jsonl', rows)
     summary = {'standardized_records': len(sources), 'uniquification_decisions': len(records),
                'preparation_decisions': len(mappings), 'submitted_records': len(submitted),
-               'identified_results': len(results), 'status': 'complete' if state.get('lca', {}).get('status') == 'succeeded' else 'partial',
+               'identified_results': len(results), 'lca_exclusions': len(excluded),
+               'unresolved_submissions': len(submitted - results.keys() - excluded.keys()),
+               'status': 'complete' if state.get('lca', {}).get('status') == 'succeeded' or (
+                   bool(submitted) and result_path.exists() and submitted == set(results) | set(excluded)) else 'partial',
                'note': 'Removed records link to a representative; carbon is counted only for submitted retained records.'}
     artifacts.write_json('trace/reconciliation.json', summary)
     return summary

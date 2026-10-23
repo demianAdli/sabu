@@ -14,7 +14,7 @@ import json
 import shutil
 
 from .contracts import load_json, require
-from .lca_results import carbon_summary, reconcile_results
+from .lca_results import carbon_summary, reconcile_outcome
 from .run_artifacts import file_digest
 
 
@@ -53,10 +53,10 @@ def submit_prepared(artifacts, preparation, config, transport, stage):
     artifacts.write_json('requests/lca.json', {
         'preparation_directory': str(attempt.relative_to(run)), 'source': str(source.relative_to(run)),
         'payload': 'requests/lca.geojson', **digest, 'submitted_ids': ids,
-        'url': f'{config.lca_url}/emissions', 'identity_contract': 'reader-feature-id-v1',
+        'url': f'{config.lca_url}/emissions?include_exclusions=true', 'identity_contract': 'reader_exclusions_v1',
         'timeout_seconds': [config.lca_connect_timeout_seconds, config.lca_read_timeout_seconds]})
     stage('lca_submission')
-    transport.exchange('POST', f'{config.lca_url}/emissions',
+    transport.exchange('POST', f'{config.lca_url}/emissions?include_exclusions=true',
                        destination=artifacts.path('responses/lca.body'),
                        metadata_path=artifacts.path('responses/lca.http.json'),
                        run_id=artifacts.run_id,
@@ -65,11 +65,15 @@ def submit_prepared(artifacts, preparation, config, transport, stage):
     require(file_digest(destination) == digest and file_digest(source) == digest, 'LCA source or request changed during submission.')
     stage('lca_contract')
     payload = load_json(artifacts.path('responses/lca.body'))
-    report, identified = reconcile_results(payload, ids)
+    report, identified = reconcile_outcome(payload, ids)
     artifacts.write_json('lca/reconciliation.json', report)
     require(report['status'] == 'succeeded', 'Unresolved LCA result reconciliation; inspect lca/reconciliation.json.')
-    artifacts.write_json('lca/results.json', payload)
+    artifacts.write_json('lca/results.json', payload['results'])
+    artifacts.write_json('lca/exclusions.json', payload['exclusions'])
+    require(bool(identified), 'All submitted records were excluded by LCA; no buildings remain for carbon calculation.')
     summary = carbon_summary(identified)
     artifacts.write_json('lca/summary.json', summary)
-    return {'status': 'succeeded', 'submitted': len(ids), 'returned': len(payload),
+    return {'status': 'succeeded', 'submitted': len(ids), 'returned': len(payload['results']),
+            'calculated': len(payload['results']), 'excluded': len(payload['exclusions']),
+            'exclusions_path': 'lca/exclusions.json',
             'summary': summary, 'results_path': 'lca/results.json'}

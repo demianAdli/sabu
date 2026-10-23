@@ -63,3 +63,44 @@ def carbon_summary(identified):
             'total_reported_lca_scope': combined,
             'scope': 'Reported opening/envelope embodied and end-of-life emissions only.',
             'aggregation': 'component is opening + envelope; do not add constituents again.'}
+
+
+def reconcile_outcome(payload, submitted_ids):
+    """Account for calculated buildings and documented reader exclusions."""
+    require(isinstance(payload, dict) and type(payload.get('schema_version')) is int
+            and payload['schema_version'] == 1, 'LCA requires the versioned reader-outcome response.')
+    require(isinstance(payload.get('results'), list) and isinstance(payload.get('exclusions'), list),
+            'LCA outcome requires results and exclusions arrays.')
+    report, identified = reconcile_results(payload['results'], submitted_ids)
+    excluded = {}
+    for index, exclusion in enumerate(payload['exclusions']):
+        if not isinstance(exclusion, dict) or type(exclusion.get('feature_id')) is not int:
+            report['issues'].append({'exclusion_index': index, 'reason': 'Missing or invalid exclusion feature_id.'})
+            continue
+        identifier = exclusion['feature_id']
+        if identifier in excluded:
+            report['issues'].append({'feature_id': identifier, 'reason': 'Duplicate exclusion ID.'})
+        excluded[identifier] = exclusion
+        if identifier in identified:
+            report['issues'].append({'feature_id': identifier, 'reason': 'ID both calculated and excluded.'})
+        area = exclusion.get('reader_floor_area_m2')
+        minimum = exclusion.get('minimum_floor_area_m2')
+        if (exclusion.get('reason_code') != 'reader_floor_area_below_minimum'
+                or exclusion.get('field') != 'geometry'
+                or not isinstance(exclusion.get('reason'), str) or not exclusion['reason'].strip()
+                or type(area) not in (int, float) or not math.isfinite(area) or not 0 <= area < 25
+                or type(minimum) not in (int, float) or minimum != 25):
+            report['issues'].append({'feature_id': identifier, 'reason': 'Unsupported or invalid reader exclusion evidence.'})
+    accounted = identified.keys() | excluded.keys()
+    report['missing_ids'] = sorted(set(submitted_ids) - accounted)
+    report['unexpected_ids'] = sorted(accounted - set(submitted_ids))
+    report.update(calculated=len(payload['results']), excluded=len(payload['exclusions']),
+                  accounted=len(accounted & set(submitted_ids)))
+    expected = {'submitted': len(submitted_ids), 'calculated': report['calculated'], 'excluded': report['excluded']}
+    counts = payload.get('counts')
+    if (not isinstance(counts, dict) or set(counts) != set(expected)
+            or any(type(counts[k]) is not int or counts[k] != value for k, value in expected.items())):
+        report['issues'].append({'reason': 'LCA reported counts do not reconcile.'})
+    report['status'] = 'failed' if report['issues'] or report['missing_ids'] or report['unexpected_ids'] else 'succeeded'
+    report['identity_basis'] = 'feature_id partitions submitted records into calculated results and evidenced reader exclusions'
+    return report, identified

@@ -47,19 +47,27 @@ def write_evaluation(artifacts, state):
     stages = state.get('stage_outcomes', [])
     complete = state.get('status') in ('succeeded', 'succeeded_with_cleanup_errors') and state.get('lca', {}).get('status') == 'succeeded'
     failed = state.get('status') == 'failed'
+    trace = state.get('trace', {})
+    trace_complete = trace.get('status') == 'complete'
+    outcomes = {key: state.get('lca', {}).get(key) for key in ('submitted', 'calculated', 'excluded')}
+    if trace.get('submitted_records', 0):
+        outcomes['submitted'] = trace['submitted_records']
+        if trace_complete:
+            outcomes.update(calculated=trace['identified_results'], excluded=trace.get('lca_exclusions', 0))
     report = {'schema_version': 1, 'run_id': artifacts.run_id, 'fsa': state['fsa'],
               'status': state['status'], 'criteria': {
                   'end_to_end_execution': {'status': 'passed' if complete else ('failed' if failed else 'not_evaluated'),
                                            'evidence': ['run.json', 'reports/stages.json', 'responses/lca.http.json']},
-                  'contract_compliance': {'status': 'passed' if complete else 'incomplete',
+                  'contract_compliance': {'status': 'passed' if complete or trace_complete else 'incomplete',
                                           'evidence': ['lca/reconciliation.json', 'reports/stages.json']},
-                  'traceability': {'status': 'passed' if complete and state.get('trace', {}).get('status') == 'complete' else 'incomplete',
+                  'traceability': {'status': 'passed' if trace_complete else 'incomplete',
                                    'evidence': ['trace/records.jsonl', 'trace/reconciliation.json']},
                   'failure_handling': {'status': 'failure_recorded' if failed else 'not_exercised',
                                        'evidence': ['run.json', 'reports/stages.json'],
                                        'note': 'Controlled injected-failure tests are separate evidence; a successful real run does not prove failure handling.'}},
               'error': state.get('error'), 'cleanup_errors': state.get('cleanup_errors', []),
               'provenance': 'reports/provenance.json',
+              'lca_outcomes': outcomes,
               'artifacts': {k: v for k, v in state.get('artifacts', {}).items() if k != 'reports/evaluation.json'},
               'timeout_policy': 'No automatic processing retries; timeout does not establish upstream cancellation.'}
     artifacts.write_json('reports/stages.json', stages)
