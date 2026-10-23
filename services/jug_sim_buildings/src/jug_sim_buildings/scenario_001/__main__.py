@@ -15,7 +15,7 @@ import sys
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description='Run scenario_001 using two upstream HTTP APIs.')
+    parser = argparse.ArgumentParser(description='Run scenario_001 through GIS APIs, preparation and optional LCA submission.')
     parser.add_argument('--config', required=True, help='Path to a scenario JSON configuration file.')
     parser.add_argument('--prepare-from-run', help='Prepare an existing successful run without HTTP calls.')
     args = parser.parse_args(argv)

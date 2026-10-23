@@ -48,7 +48,7 @@ class RunArtifacts:
         self.directory = fsa_root / self.run_id
         self.directory.mkdir()  # Existing runs are never reused or overwritten.
         self._temporary = set()
-        for name in ('input', 'requests', 'responses', 'reports', 'evidence', 'tmp'):
+        for name in ('input', 'requests', 'responses', 'reports', 'evidence', 'tmp', 'lca', 'trace'):
             (self.directory / name).mkdir()
 
     def path(self, relative):

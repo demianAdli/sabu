@@ -49,6 +49,11 @@ class ScenarioConfig:
     preparation_source_crs: str | None = None
     preparation_source_crs_evidence: str | None = None
     preparation_coordinate_operation: str | None = None
+    lca_enabled: bool = False
+    lca_url: str | None = None
+    lca_connect_timeout_seconds: float = 10
+    lca_read_timeout_seconds: float = 7200
+    evaluation_provenance_path: str | None = None
 
     def __post_init__(self):
         for key in ('gis_cities_url', 'gis_validation_url'):
@@ -64,7 +69,8 @@ class ScenarioConfig:
         object.__setattr__(self, 'output_root', Path(self.output_root).resolve())
         for key in (
                 'connect_timeout_seconds', 'preprocess_read_timeout_seconds',
-                'download_read_timeout_seconds', 'uniquification_read_timeout_seconds'):
+                'download_read_timeout_seconds', 'uniquification_read_timeout_seconds',
+                'lca_connect_timeout_seconds', 'lca_read_timeout_seconds'):
             value = getattr(self, key)
             if (type(value) not in (int, float) or not math.isfinite(value)
                     or value <= 0):
@@ -89,6 +95,16 @@ class ScenarioConfig:
             raise ValueError('preparation_measurement_crs is required.')
         if (self.preparation_source_crs is None) != (self.preparation_source_crs_evidence is None):
             raise ValueError('Source CRS override and independent verification evidence must be provided together.')
+        if type(self.lca_enabled) is not bool:
+            raise ValueError('lca_enabled must be a boolean.')
+        if self.lca_url is not None:
+            object.__setattr__(self, 'lca_url', http_url(self.lca_url))
+        if self.lca_enabled and (not self.preparation_enabled or not self.lca_url):
+            raise ValueError('lca_enabled requires preparation_enabled and lca_url.')
+        if self.evaluation_provenance_path is not None:
+            if not isinstance(self.evaluation_provenance_path, str) or not self.evaluation_provenance_path.strip():
+                raise ValueError('evaluation_provenance_path must be a nonblank path.')
+            object.__setattr__(self, 'evaluation_provenance_path', str(Path(self.evaluation_provenance_path).resolve()))
 
     @classmethod
     def from_file(cls, filename):
@@ -102,6 +118,11 @@ class ScenarioConfig:
         if not values['output_root'].strip():
             raise ValueError('output_root must be a nonblank path.')
         values['output_root'] = path.parent / values['output_root']
+        if values.get('evaluation_provenance_path') is not None:
+            value = values['evaluation_provenance_path']
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError('evaluation_provenance_path must be a nonblank path.')
+            values['evaluation_provenance_path'] = str(path.parent / value)
         return cls(**values)
 
     def as_dict(self):

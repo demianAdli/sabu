@@ -2,7 +2,7 @@
 Sabu project
 jug_sim_buildings package
 workflow module
-Run scenario_001 through the preprocessing and uniquification APIs.
+Run synchronous GIS, preparation and identified LCA execution.
 Project Designer and Developer: Alireza Adli
 alireza.adli@mail.concordia.ca
 alireza.adli4@gmail.com
@@ -21,6 +21,9 @@ from .contracts import (
 )
 from .reporting import duplicate_report, source_record, summary_text
 from .run_artifacts import RunArtifacts, file_digest, utc_now
+from .evaluation import capture_provenance, write_evaluation
+from .traceability import write_trace
+from .reporting import completion_text
 
 
 logger = get_logger(__name__)
@@ -44,7 +47,7 @@ def run_scenario(config, *, transport=None, run_id=None):
         'scenario': 'scenario_001', 'run_id': artifacts.run_id, 'fsa': config.fsa,
         'request_id': artifacts.run_id, 'parent_request_id': previous_id,
         'started_at': utc_now(), 'status': 'running', 'stage': 'initializing',
-        'configuration': config.as_dict(), 'artifacts': {},
+        'configuration': config.as_dict(), 'artifacts': {}, 'stage_outcomes': [],
         'contract_notes': [
             'Generic standardized GeoJSON schema differs from Montreal adapter fields.',
             'CRS is not guaranteed; preserve declarations, otherwise record unknown.',
@@ -56,6 +59,10 @@ def run_scenario(config, *, transport=None, run_id=None):
     secondary_errors = []
 
     def stage(name):
+        now = utc_now()
+        if state['stage_outcomes'] and state['stage_outcomes'][-1]['status'] == 'running':
+            state['stage_outcomes'][-1].update(status='succeeded', finished_at=now)
+        state['stage_outcomes'].append({'stage': name, 'status': 'running', 'started_at': now})
         state['stage'] = name
         artifacts.write_json('run.json', state)
         logger.info('scenario_stage', extra={
@@ -66,8 +73,11 @@ def run_scenario(config, *, transport=None, run_id=None):
 
     try:
         artifacts.write_json('run.json', state)
+        stage('provenance')
+        capture_provenance(artifacts, config)
         if config.preparation_enabled:
             from .reprojection import check_capability
+            stage('preparation_preflight')
             check_capability()
         if client is None:
             client = HTTPTransport()
@@ -152,6 +162,12 @@ def run_scenario(config, *, transport=None, run_id=None):
             from .preparation import prepare_run
             stage('preparation')
             state['preparation'] = prepare_run(artifacts.directory, config, allow_running=True)
+        if config.lca_enabled:
+            from .lca_submission import submit_prepared
+            stage('lca_payload')
+            state['lca'] = submit_prepared(artifacts, state['preparation'], config, client, stage)
+        stage('traceability')
+        state['trace'] = write_trace(artifacts, state)
         state['status'] = ('succeeded_with_cleanup_errors' if state.get('preparation', {}).get('status')
                            == 'succeeded_with_cleanup_errors' else 'succeeded')
         state['stage'] = 'completed'
@@ -179,6 +195,49 @@ def run_scenario(config, *, transport=None, run_id=None):
             if primary_error is None:
                 state['status'] = 'succeeded_with_cleanup_errors'
         state['finished_at'] = utc_now()
+        if state['stage_outcomes'] and state['stage_outcomes'][-1]['status'] == 'running':
+            state['stage_outcomes'][-1].update(
+                status='failed' if primary_error is not None else 'succeeded', finished_at=state['finished_at'])
+        try:
+            if primary_error is not None:
+                state['trace'] = write_trace(artifacts, state)
+            summary = artifacts.path('reports/summary.md')
+            text = summary.read_text(encoding='utf-8') if summary.exists() else '# scenario_001\n'
+            artifacts.write_text('reports/summary.md', text + completion_text(state))
+            artifacts.write_json('reports/stages.json', state['stage_outcomes'])
+            for path in artifacts.directory.rglob('*'):
+                if path.is_file():
+                    relative = path.relative_to(artifacts.directory).as_posix()
+                    if relative not in ('run.json', 'reports/evaluation.json') and 'tmp' not in path.relative_to(artifacts.directory).parts:
+                        remember(relative)
+            write_evaluation(artifacts, state)
+            remember('reports/evaluation.json')
+        except Exception as exc:
+            logger.exception('scenario_evidence_finalization_failed', extra={'run_id': artifacts.run_id})
+            if primary_error is None:
+                primary_error = exc
+                state.update(status='failed', stage='evidence_finalization', error={
+                    'type': type(exc).__name__, 'message': str(exc), 'stage': 'evidence_finalization'})
+            else:
+                state['evidence_error'] = {'type': type(exc).__name__, 'message': str(exc)}
+            try:
+                write_evaluation(artifacts, state)
+            except Exception:
+                logger.exception('scenario_evaluation_write_failed')
+        try:
+            # Report finalization can create scratch after the first cleanup.
+            later_cleanup = [error for error in artifacts.cleanup(failed=primary_error is not None)
+                             if error not in secondary_errors]
+            if later_cleanup:
+                secondary_errors.extend(later_cleanup)
+                if primary_error is None:
+                    state['status'] = 'succeeded_with_cleanup_errors'
+                write_evaluation(artifacts, state)
+                remember('reports/evaluation.json')
+        except Exception as exc:
+            secondary_errors.append({'operation': 'final_evidence_cleanup', 'message': str(exc)})
+            if primary_error is None:
+                state['status'] = 'succeeded_with_cleanup_errors'
         try:
             artifacts.write_json('run.json', state)
         except Exception as exc:
@@ -190,6 +249,13 @@ def run_scenario(config, *, transport=None, run_id=None):
             state.setdefault('error', {'type': type(exc).__name__, 'message': str(exc),
                                        'stage': 'finalizing_metadata'})
             state['metadata_error'] = str(exc)
+            state['stage_outcomes'].append({'stage': 'finalizing_metadata', 'status': 'failed',
+                                             'started_at': utc_now(), 'finished_at': utc_now()})
+            try:
+                write_evaluation(artifacts, state)
+                remember('reports/evaluation.json')
+            except Exception:
+                logger.exception('scenario_failed_metadata_evaluation_write_failed')
             try:
                 secondary_errors.extend(artifacts.cleanup(failed=True))
             except Exception as cleanup_error:
@@ -215,4 +281,6 @@ def run_scenario(config, *, transport=None, run_id=None):
             'run_directory': str(artifacts.directory),
             'retained_path': str(artifacts.path('retained.geojson')),
             'status': state['status'], 'counts': state['counts'],
-            **({'preparation': state['preparation']} if 'preparation' in state else {})}
+            **({'preparation': state['preparation']} if 'preparation' in state else {}),
+            **({'lca': state['lca']} if 'lca' in state else {}),
+            'evaluation_path': str(artifacts.path('reports/evaluation.json'))}

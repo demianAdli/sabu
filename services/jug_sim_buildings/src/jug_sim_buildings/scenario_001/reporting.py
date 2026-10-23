@@ -2,7 +2,7 @@
 Sabu project
 jug_sim_buildings package
 reporting module
-Report whole-run removals and a bounded duplicate-group inspection.
+Report selection, preparation and identified LCA execution outcomes.
 Project Designer and Developer: Alireza Adli
 alireza.adli@mail.concordia.ca
 alireza.adli4@gmail.com
@@ -13,6 +13,21 @@ from collections import defaultdict
 import math
 
 from .contracts import require
+
+
+def completion_text(state):
+    """Describe exclusions separately from whole-stage processing failures."""
+    preparation = state.get('preparation', {}).get('counts', {})
+    lca = state.get('lca', {})
+    summary = lca.get('summary', {})
+    return ('\n## Execution outcome\n\n'
+            f'Status: {state["status"]}. Stage: {state["stage"]}.\n\n'
+            f'Preparation: {preparation or "not completed; inspect preparation evidence"}.\n\n'
+            f'LCA: {lca.get("status", "not completed or not requested")}; '
+            f'submitted: {lca.get("submitted", "unknown")}; returned: {lca.get("returned", "unknown")}.\n\n'
+            f'Carbon summary: {summary or "unavailable"}.\n\n'
+            f'Processing error (not a record exclusion): {state.get("error", "none")}.\n\n'
+            'See trace/records.jsonl and reports/evaluation.json for evidence and limitations.\n')
 
 
 SOURCE_KEYS = (
