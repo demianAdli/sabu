@@ -35,9 +35,9 @@ class EmissionsArtifactStore:
         )
         self.base_dir = Path(configured_dir)
 
-    def build_request_hash(self, request_city):
+    def build_request_hash(self, request_city, *, include_exclusions=False):
         payload = {
-            'cache_namespace': self.CACHE_NAMESPACE,
+            'cache_namespace': self.CACHE_NAMESPACE + ('_reader_exclusions_v1' if include_exclusions else ''),
             'request_city': request_city,
         }
         canonical = json.dumps(
@@ -106,6 +106,24 @@ class EmissionsArtifactStore:
         if not path.exists():
             return None
         return path.read_text(encoding='utf-8')
+
+    def load_reader_outcome(self, request_hash):
+        """Never adopt legacy arrays as complete results/exclusions evidence."""
+        path = self._artifact_dir(request_hash) / 'reader_outcome.json'
+        return json.loads(path.read_text(encoding='utf-8')) if path.exists() else None
+
+    def save_reader_outcome(self, request_hash, request_city, outcome):
+        self._ensure_dir(request_hash)
+        self._write_json_atomic(self._request_path(request_hash), request_city)
+        # Publish the entire outcome together; results and exclusions cannot
+        # be read from different partially written cache generations.
+        self._write_json_atomic(self._artifact_dir(request_hash) / 'reader_outcome.json', outcome)
+        self._write_json_atomic(self._metadata_path(request_hash), {
+            'request_hash': request_hash,
+            'cache_namespace': self.CACHE_NAMESPACE + '_reader_exclusions_v1',
+            'created_at_utc': datetime.now(timezone.utc).isoformat(),
+            'response_contract': 'reader_exclusions_v1', 'counts': outcome['counts'],
+            'records': len(outcome['results']), 'has_csv_report': False})
 
     def save_csv_report(self, request_hash, csv_text):
         self._ensure_dir(request_hash)
