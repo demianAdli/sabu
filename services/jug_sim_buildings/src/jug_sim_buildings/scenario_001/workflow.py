@@ -66,6 +66,9 @@ def run_scenario(config, *, transport=None, run_id=None):
 
     try:
         artifacts.write_json('run.json', state)
+        if config.preparation_enabled:
+            from .reprojection import check_capability
+            check_capability()
         if client is None:
             client = HTTPTransport()
 
@@ -145,7 +148,12 @@ def run_scenario(config, *, transport=None, run_id=None):
         for name in ('responses/uniquification.body', 'source_crs.json',
                      'reports/duplicates.json', 'reports/summary.md'):
             remember(name)
-        state['status'] = 'succeeded'
+        if config.preparation_enabled:
+            from .preparation import prepare_run
+            stage('preparation')
+            state['preparation'] = prepare_run(artifacts.directory, config, allow_running=True)
+        state['status'] = ('succeeded_with_cleanup_errors' if state.get('preparation', {}).get('status')
+                           == 'succeeded_with_cleanup_errors' else 'succeeded')
         state['stage'] = 'completed'
     except (Exception, KeyboardInterrupt) as exc:
         primary_error = exc
@@ -206,4 +214,5 @@ def run_scenario(config, *, transport=None, run_id=None):
     return {'run_id': artifacts.run_id, 'fsa': config.fsa,
             'run_directory': str(artifacts.directory),
             'retained_path': str(artifacts.path('retained.geojson')),
-            'status': state['status'], 'counts': state['counts']}
+            'status': state['status'], 'counts': state['counts'],
+            **({'preparation': state['preparation']} if 'preparation' in state else {})}

@@ -44,6 +44,11 @@ class ScenarioConfig:
     uniquification_read_timeout_seconds: float = 300
     cleanup_outputs: bool = True
     keep_outputs: tuple[str, ...] = ()
+    preparation_enabled: bool = False
+    preparation_measurement_crs: str = 'EPSG:2950'
+    preparation_source_crs: str | None = None
+    preparation_source_crs_evidence: str | None = None
+    preparation_coordinate_operation: str | None = None
 
     def __post_init__(self):
         for key in ('gis_cities_url', 'gis_validation_url'):
@@ -73,6 +78,17 @@ class ScenarioConfig:
         if keys and not self.cleanup_outputs:
             raise ValueError('keep_outputs requires cleanup_outputs=true.')
         object.__setattr__(self, 'keep_outputs', keys)
+        if type(self.preparation_enabled) is not bool:
+            raise ValueError('preparation_enabled must be a boolean.')
+        for key in ('preparation_measurement_crs', 'preparation_source_crs',
+                    'preparation_source_crs_evidence', 'preparation_coordinate_operation'):
+            value = getattr(self, key)
+            if value is not None and (not isinstance(value, str) or not value.strip()):
+                raise ValueError(f'{key} must be a nonblank string.')
+        if self.preparation_measurement_crs is None:
+            raise ValueError('preparation_measurement_crs is required.')
+        if (self.preparation_source_crs is None) != (self.preparation_source_crs_evidence is None):
+            raise ValueError('Source CRS override and independent verification evidence must be provided together.')
 
     @classmethod
     def from_file(cls, filename):

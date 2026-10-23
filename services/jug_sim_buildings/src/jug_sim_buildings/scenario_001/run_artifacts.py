@@ -120,3 +120,36 @@ class RunArtifacts:
                                'message': str(exc)})
         # Leave the directory itself (and any untracked files) alone.
         return errors
+
+
+class PreparationArtifacts(RunArtifacts):
+    """Own one new preparation attempt without rewriting the parent run."""
+
+    def __init__(self, run_directory):
+        run_directory = Path(run_directory).resolve()
+        parent = run_directory / 'preparation'
+        if parent.resolve() != parent:
+            raise ValueError('Refusing a linked preparation directory.')
+        parent.mkdir(exist_ok=True)
+        self.attempt_id = uuid4().hex
+        self.directory = parent / self.attempt_id
+        self.directory.mkdir()
+        self._temporary = set()
+        for name in ('tmp', 'evidence'):
+            (self.directory / name).mkdir()
+
+    def cleanup(self, *, failed):
+        errors = []
+        if failed:
+            for name in ('geometry-wgs84.geojson', 'lca-final.geojson'):
+                relative = Path('tmp') / name
+                try:
+                    source = self.path(relative)
+                    if source.exists():
+                        source.replace(self.path(f'evidence/{name}.partial'))
+                        self._temporary.discard(relative)
+                except Exception as exc:
+                    errors.append({'path': str(relative), 'message': str(exc)})
+                    # A failed quarantine must not lead to deletion of its evidence.
+                    self._temporary.discard(relative)
+        return errors + super().cleanup(failed=failed)

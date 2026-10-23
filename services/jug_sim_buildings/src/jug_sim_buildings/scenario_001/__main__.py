@@ -17,6 +17,7 @@ import sys
 def main(argv=None):
     parser = argparse.ArgumentParser(description='Run scenario_001 using two upstream HTTP APIs.')
     parser.add_argument('--config', required=True, help='Path to a scenario JSON configuration file.')
+    parser.add_argument('--prepare-from-run', help='Prepare an existing successful run without HTTP calls.')
     args = parser.parse_args(argv)
     # --help performs no service imports, filesystem writes, or logging setup.
     from .config import ScenarioConfig
@@ -29,7 +30,11 @@ def main(argv=None):
     from .workflow import run_scenario
     try:
         configure_service_logging()
-        result = run_scenario(config)
+        if args.prepare_from_run:
+            from .preparation import prepare_run
+            result = prepare_run(args.prepare_from_run, config)
+        else:
+            result = run_scenario(config)
     except Exception as exc:
         print(str(exc), file=sys.stderr)
         return 1
