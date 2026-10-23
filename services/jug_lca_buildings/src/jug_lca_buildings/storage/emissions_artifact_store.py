@@ -1,8 +1,8 @@
 """
 Sabu project
-jug_lca_buildings package
-Filesystem-backed cache for emissions results and exported reports.
-Licensed under the Apache License, Version 2.0.
+jug_sim_buildings package
+emissions_artifact_store module
+Cache LCA artifacts separately for identified results.
 Project Designer and Developer: Alireza Adli
 alireza.adli@mail.concordia.ca
 alireza.adli4@gmail.com
@@ -24,9 +24,9 @@ class EmissionsArtifactStore:
     Artifacts are keyed by a deterministic request hash.
     """
 
-    # Older results may include holes interpreted as exterior surfaces. Keep
-    # those artifacts, but recompute under the winding-aware reader semantics.
-    CACHE_NAMESPACE = 'jug_lca_buildings_emissions_v2'
+    # Retain old artifacts, but recompute identified results rather than reuse
+    # identifier-less entries from earlier reader/cache semantics.
+    CACHE_NAMESPACE = 'jug_lca_buildings_emissions_v3_identified'
 
     def __init__(self, base_dir=None):
         configured_dir = base_dir or os.getenv(

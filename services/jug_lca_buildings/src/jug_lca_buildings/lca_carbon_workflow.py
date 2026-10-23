@@ -1,15 +1,15 @@
 """
 Sabu project
-jug_lca_buildings package
+jug_sim_buildings package
 lca_carbon_workflow module
-Currently calculates Embodied and End-of-Life
-Returns the summarize of envelope and energy systems
+Calculate LCA emissions with verified source feature identities.
 Project Designer and Developer: Alireza Adli
 alireza.adli@mail.concordia.ca
 alireza.adli4@gmail.com
 www.demianadli.com
 """
 import logging
+import json
 import os
 from pathlib import Path
 from time import perf_counter
@@ -136,6 +136,13 @@ class LCACarbonWorkflow:
             ) from e
 
     enrich_t0 = perf_counter()
+    with self.file_path.open(encoding='utf-8') as stream:
+      submitted = json.load(stream)['features']
+    ids = [feature['id'] for feature in submitted]
+    if any(type(identifier) is not int for identifier in ids) or len(set(ids)) != len(ids):
+      raise ValueError('LCA requires unique integer feature IDs for reliable result identification.')
+    self.submitted_feature_ids = {str(identifier): identifier for identifier in ids}
+    self._reader_feature_ids()
     ConstructionFactory(self.handler, self.city).enrich()
     logger.info(
       f'Construction enrichment took {perf_counter() - enrich_t0:.3f}s')
@@ -149,6 +156,23 @@ class LCACarbonWorkflow:
     self.building_envelope_end_of_life_emission = []
     self.building_opening_end_of_life_emission = []
     self.building_component_end_of_life_emission = []
+
+  def _reader_feature_ids(self):
+    """Join actual reader identities, never input/reader array positions.
+
+    cerc-hub 0.2.0.8 omits footprints smaller than 25 square metres.
+    Preserve that policy, but fail the batch rather than silently lose records.
+    """
+    names = [str(building.name) for building in self.city.buildings]
+    expected = self.submitted_feature_ids
+    missing = sorted(set(expected) - set(names))
+    unexpected = sorted(set(names) - set(expected))
+    if len(set(names)) != len(names) or missing or unexpected:
+      raise ValueError(
+        f'LCA reader identity mismatch: missing={missing}; unexpected={unexpected}; '
+        f'duplicate_reader_names={len(set(names)) != len(names)}. '
+        'The pinned reader excludes footprints below 25 m2; no omission is silently accepted.')
+    return [expected[name] for name in names]
 
   def calculate_building_component_emission(self, building):
     """
@@ -312,6 +336,8 @@ class LCACarbonWorkflow:
       which hold the final results. These attributes are mentioned in the
       constructor method description.
     """
+    reader_ids = self._reader_feature_ids()
+    self.building_feature_ids = []
     building_count = 1
     total_buildings = len(self.city.buildings)
     calc_t0 = perf_counter()
@@ -338,6 +364,7 @@ class LCACarbonWorkflow:
         opening_end_of_life_emission)
       self.building_component_end_of_life_emission.append(
         component_end_of_life_emission)
+      self.building_feature_ids.append(reader_ids[building_count - 1])
       building_count += 1
     elapsed_s = perf_counter() - calc_t0
     if total_buildings:
@@ -372,10 +399,14 @@ class LCACarbonWorkflow:
     )
 
     num_features = len(emissions[0])  
+    if (any(len(values) != num_features for values in emissions)
+        or len(self.building_feature_ids) != num_features):
+      raise ValueError('LCA metric/identity count mismatch.')
 
     emissions_data = []
     for i in range(num_features):
         feature_emissions = {
+            'feature_id': self.building_feature_ids[i],
             'opening_embodied_emissions': emissions[0][i],
             'envelope_embodied_emissions': emissions[1][i],
             'component_embodied_emissions': emissions[2][i],
