@@ -3,6 +3,14 @@
 ## [Unreleased]
 
 ### Added
+- Optional scenario_001 LCA preparation and existing-run CLI mode with independent
+  eligibility/normalization, generated names, stable numeric IDs, and full positional
+  lineage for accepted/rejected features. No LCA service or cerc-hub imports/submission.
+- Separate preparation attempts, count reconciliation, rejection reasons, CRS and
+  measurement audit reports, scoped scratch cleanup, and verified WGS84 LCA exports.
+- Runtime verification of the actually consumed CityGISOO reprojection capability,
+  strict source-CRS evidence, and method-based EPSG:4617/2950/4326 transformation/copy.
+- H3B sample configuration and focused preparation/export tests; package version unchanged.
 - Shared scenario configuration JSON Schema and health API specification/examples
   under the repository's `contracts/` layout.
 - Scenario_001 CLI and Flask-independent workflow for Montreal FSA preprocessing,

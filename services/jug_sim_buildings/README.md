@@ -15,6 +15,25 @@ This command executes real preprocessing; configure the upstream services first.
 Normal scenario runs request upstream cleanup. No GIS execution happens during
 imports, `--help`, foundation API startup, or health requests.
 
+The example uses H3B. Set `preparation_enabled` to `true` to prepare eligible LCA
+features after uniquification. Preparation requires the separately maintained
+CityGISOO package exposing `ScrubLayer.reproject_layer` in a configured QGIS
+environment. The optional `preparation` extra declares CityGISOO, but a version
+number alone does not guarantee that method; the imported package is checked.
+Keep the existing OSGeo4W environment and native dependencies intact.
+
+To prepare an already successful run without repeating upstream calls:
+
+```powershell
+pyqgis344 -m jug_sim_buildings.scenario_001 --config contracts/examples/jug_sim_buildings/scenario_001.json --prepare-from-run <H3B-run-directory>
+```
+
+Each attempt writes separate artifacts under `<run>/preparation/<attempt_id>/`,
+including accepted/rejected features, ID mappings, CRS/measurement reports, and
+verified `lca_input.geojson` in EPSG:4326 longitude/latitude order. Existing run
+artifacts are preserved. Missing/ambiguous CRS, no eligible features, and failed
+transformation/export stop preparation. This stage does not submit to LCA.
+
 Repository-level [examples](../../contracts/examples/jug_sim_buildings/README.md),
 [configuration schema](../../contracts/jsonschema/jug_sim_buildings/scenario_001_config.schema.json),
 and [OpenAPI specification](../../contracts/openapi/jug_sim_buildings.yaml) live
