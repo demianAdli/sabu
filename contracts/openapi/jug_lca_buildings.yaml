@@ -14,6 +14,9 @@ info:
     Polygon and MultiPolygon geometries, including mixed collections, retain their parts and holes.
     Either ring winding direction is accepted. The reader orients an internal copy without changing
     coordinate values or source objects/files; the first ring is exterior and subsequent rings are holes.
+    Feature IDs must be unique integers. Reader identity omissions or duplicates fail the batch;
+    the pinned reader excludes footprints below 25 m2, so such inputs fail explicitly rather than shifting result attribution.
+    Component emissions are opening plus envelope subtotals; do not add those parts again.
     Coordinates must already be WGS84 longitude/latitude; CRS metadata does not trigger reprojection.
 servers:
   - url: http://localhost:5000
@@ -242,8 +245,13 @@ components:
           example: 1995
     EmissionResult:
       type: object
-      description: Per-building emission totals in kgCO2e.
+      description: Per-building emissions in kgCO2e with a verified feature ID; response order is not an identity guarantee.
+      required: [feature_id, opening_embodied_emissions, envelope_embodied_emissions, component_embodied_emissions, opening_end_of_life_emissions, envelope_end_of_life_emissions, component_end_of_life_emissions]
       properties:
+        feature_id:
+          type: integer
+          description: Original submitted feature ID verified against the actual reader-created building.
+          example: 1
         opening_embodied_emissions:
           type: number
           format: float
