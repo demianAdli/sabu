@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Identified LCA results
+- Return original integer `feature_id` from each actual reader-created building.
+  Reject duplicate input IDs and unresolved reader omissions/identity mismatches
+  before enrichment; preserve the pinned reader's existing footprint policy.
+- Isolate identifier-less historical cache entries with a new cache namespace;
+  retain their files without deletion. Package version is unchanged.
+
 ### Added
 - Add opt-in evaluation cache preparation through `JUG_LCA_ARTIFACTS_DIR`, recording declared source/reference-data provenance and installed software versions, with explicit verification for reuse and no deletion of existing artifacts.
 - Log calculation and CSV cache outcomes with full request hashes and resolved cache directories for evaluation provenance without changing API responses or cache keys.

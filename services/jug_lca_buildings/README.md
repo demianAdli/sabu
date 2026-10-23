@@ -323,3 +323,24 @@ Release flow:
 2. Create and push the git tag `jug_lca_buildings-v0.1.1`.
 3. GitHub Actions builds the Docker image with `JUG_LCA_BUILDINGS_VERSION=0.1.1`.
 4. The image is pushed to Docker Hub as `demianadli/jug_lca_buildings:0.1.1`.
+
+## Result identity for scenario integration
+
+JSON results include `feature_id`, the original integer GeoJSON ID verified
+against the actual reader-created building used for calculation. Input IDs must
+be unique. Results can be joined by ID regardless of order; counts alone are not
+identity evidence. Reader omissions, duplicate identities, and unexpected IDs
+fail the batch before enrichment. The pinned cerc-hub reader excludes footprints
+below 25 m2; this policy is unchanged and its omissions now fail explicitly.
+No substitute ID or positional match is manufactured.
+
+The cache namespace is `jug_lca_buildings_emissions_v3_identified`; old cache files
+remain intact and are not reused as identified results. Full cache/code/catalogue
+provenance is still available through evaluation manifests and correlated service
+logs, not the JSON response. The CSV exporter still associates metadata by input
+position; use identified JSON results for scenario traceability.
+
+When testing the checkout without reinstalling a published package, set
+`$env:PYTHONPATH = (Resolve-Path .\src).Path` from this service directory
+before starting Flask or its evaluation-cache command. This ensures the inspected
+source is used rather than an older installed wheel. Keep the existing environment.
