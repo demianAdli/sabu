@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/jsonschema/jug_lca_buildings/reader_outcome.schema.json",
+  "title": "LCA Reader Outcome",
+  "description": "Opt-in include_exclusions=true response. Each submitted ID appears exactly once in results or exclusions. Counts and IDs require cross-record reconciliation. Reader areas are m2; carbon values are kgCO2e for calculated buildings only.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "results",
+    "exclusions",
+    "counts"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "$ref": "./emission_result.schema.json"
+      }
+    },
+    "exclusions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "feature_id",
+          "reason_code",
+          "field",
+          "reason",
+          "reader_floor_area_m2",
+          "minimum_floor_area_m2"
+        ],
+        "properties": {
+          "feature_id": {
+            "type": "integer"
+          },
+          "reason_code": {
+            "const": "reader_floor_area_below_minimum"
+          },
+          "field": {
+            "const": "geometry"
+          },
+          "reason": {
+            "type": "string",
+            "pattern": "\\S"
+          },
+          "reader_floor_area_m2": {
+            "type": "number",
+            "minimum": 0,
+            "exclusiveMaximum": 25
+          },
+          "minimum_floor_area_m2": {
+            "const": 25
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "counts": {
+      "type": "object",
+      "required": [
+        "submitted",
+        "calculated",
+        "excluded"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "submitted": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "calculated": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "excluded": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

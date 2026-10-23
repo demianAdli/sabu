@@ -1,10 +1,11 @@
-﻿{
+{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "contracts/jsonschema/jug_lca_buildings/emission_result.schema.json",
   "title": "JUG LCA Buildings Emission Result Item",
   "description": "One item from the emissions response array. All emission values are in kgCO2e for one building.",
   "type": "object",
   "required": [
+    "feature_id",
     "opening_embodied_emissions",
     "envelope_embodied_emissions",
     "component_embodied_emissions",
@@ -36,6 +37,10 @@
     "component_end_of_life_emissions": {
       "type": "number",
       "description": "Total component end-of-life emissions in kgCO2e for one building."
+    },
+    "feature_id": {
+      "type": "integer",
+      "description": "Submitted feature ID verified against the actual calculated building."
     }
   },
   "additionalProperties": true
