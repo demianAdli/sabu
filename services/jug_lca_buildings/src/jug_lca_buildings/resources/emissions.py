@@ -1,8 +1,8 @@
 """
 Sabu project
-jug_lca_buildings package
+jug_sim_buildings package
 emissions module
-Licensed under the Apache License, Version 2.0.
+Expose strict results or opt-in identified reader outcomes.
 Project Designer and Developer: Alireza Adli
 alireza.adli@mail.concordia.ca
 alireza.adli4@gmail.com
@@ -27,6 +27,10 @@ from ..reporting import EmissionsReportExporter
 
 logger = logging.getLogger(__name__)
 DEV_MODE = os.getenv('LOG_ENV', 'dev') == 'dev'
+READER_OUTCOME_PARAMETER = {
+    'in': 'query', 'name': 'include_exclusions', 'required': False,
+    'schema': {'type': 'boolean', 'default': False},
+    'description': 'Return versioned results, exclusions and counts. JSON only; cannot combine with export=csv. Default preserves strict array responses.'}
 
 blp = Blueprint(
     'Emissions',
@@ -45,14 +49,17 @@ def _run_emissions_workflow(
     export_format = (request.args.get('export') or '').strip().lower()
     if export_format and export_format != 'csv':
         abort(400, message="Unsupported export format. Supported values: csv")
+    option = request.args.get('include_exclusions', 'false').strip().lower()
+    if option not in ('true', 'false'):
+        abort(400, message='include_exclusions must be true or false')
+    include_exclusions = option == 'true'
+    if include_exclusions and export_format:
+        abort(400, message='include_exclusions is supported for JSON responses only')
 
     logger.info(request_received_log)
     try:
-        computation_result = (
-            EmissionsApplicationService.compute_emissions(
-                request_city
-            )
-        )
+        computation_result = (EmissionsApplicationService.compute_emissions(request_city, include_exclusions=True)
+                              if include_exclusions else EmissionsApplicationService.compute_emissions(request_city))
         emissions_data = computation_result.emissions_data
         logger.info(
             "emissions_request_succeeded",
@@ -83,6 +90,9 @@ def _run_emissions_workflow(
                 ),
                 200,
             )
+        if include_exclusions:
+            return jsonify({'schema_version': 1, 'results': emissions_data,
+                            'exclusions': computation_result.exclusions, 'counts': computation_result.counts}), 201
         return jsonify(emissions_data), 201
 
     except ValidationError as err:
@@ -103,6 +113,7 @@ def _run_emissions_workflow(
 
 @blp.route('/emissions')
 class Emissions(MethodView):
+    @blp.doc(parameters=[READER_OUTCOME_PARAMETER])
     @blp.arguments(LCAInputDataSchema)
     def post(self, request_city):
         return _run_emissions_workflow(
@@ -114,6 +125,7 @@ class Emissions(MethodView):
 
 @blp.route('/emissions/upload')
 class EmissionsUpload(MethodView):
+    @blp.doc(parameters=[READER_OUTCOME_PARAMETER])
     @blp.arguments(GeoJSONUploadSchema, location='files')
     def post(self, files_data):
         geojson_file = files_data['geojson_file']
