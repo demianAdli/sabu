@@ -120,7 +120,8 @@ class TestScenarioWorkflow(unittest.TestCase):
         self.config = replace(self.config, preparation_enabled=True)
         preparation = {'status': 'succeeded', 'lca_input_path': '/prepared/lca_input.geojson'}
         with patch('jug_sim_buildings.scenario_001.reprojection.check_capability'), \
-                patch('jug_sim_buildings.scenario_001.preparation.prepare_run', return_value=preparation):
+                patch('jug_sim_buildings.scenario_001.preparation.prepare_run', return_value=preparation), \
+                patch('jug_sim_buildings.scenario_001.workflow.write_trace', return_value={'status': 'partial'}):
             outcome = self.execute([json_response(preprocessing, 201), json_response(collection),
                                     json_response(result)])
         self.assertEqual(outcome['preparation'], preparation)
