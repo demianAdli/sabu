@@ -35,11 +35,14 @@ with existing declarations. The target CRS is fixed; this stage never submits LC
 
 For complete execution, enable both `preparation_enabled` and `lca_enabled`, set
 `lca_url`, and run all three upstream APIs. LCA has separate connect/read timeouts.
-The orchestrator sends the exact final artifact to `POST /emissions`; HTTP 201
+The orchestrator sends the exact final artifact to `POST /emissions?include_exclusions=true`; HTTP 201
 results must identify their actual reader building using `feature_id`. Equal
 counts and response order are not identity guarantees. Missing IDs or unexplained
-omissions fail reconciliation. The pinned reader excludes footprints below 25 m2;
-its policy is unchanged, and such omissions cause explicit batch failure.
+omissions fail reconciliation. Documented reader floor-area exclusions below
+25 m2 are preserved in `lca/exclusions.json` and traced to original input records.
+Submitted IDs partition into calculated and excluded buildings; only calculated
+results contribute carbon. If all buildings are excluded, the scenario stops with
+explicit evidence and no zero-carbon summary. No new scenario configuration is required.
 
 `evaluation_provenance_path` optionally supplies operator-declared provenance JSON;
 relative paths resolve against the configuration file. Preserve remote service

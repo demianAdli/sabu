@@ -42,5 +42,10 @@
   "cleanup_errors": [],
   "provenance": "reports/provenance.json",
   "artifacts": {},
-  "timeout_policy": "No automatic processing retries; timeout does not establish upstream cancellation."
+  "timeout_policy": "No automatic processing retries; timeout does not establish upstream cancellation.",
+  "lca_outcomes": {
+    "submitted": null,
+    "calculated": null,
+    "excluded": null
+  }
 }
