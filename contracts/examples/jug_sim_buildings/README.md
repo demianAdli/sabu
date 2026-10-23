@@ -23,3 +23,11 @@ service resources. Runs are grouped as `<output_root>/<FSA>/<run_id>/`, with
 The consumed HTTP contracts remain owned by
 [`jug_gis_cities`](../jug_gis_cities/README.md) and
 [`jug_gis_validation`](../jug_gis_validation/README.md).
+
+The sample FSA is H3B. Preparation is disabled by default; enable
+`preparation_enabled` to produce a separate eligible EPSG:4326 LCA input after
+uniquification. `--prepare-from-run <run-directory>` prepares existing artifacts
+without upstream calls. It requires a compatible CityGISOO/QGIS environment.
+New attempts live in `<run>/preparation/<attempt_id>/`; existing artifacts remain
+unchanged. Source CRS overrides require independent evidence and may not conflict
+with existing declarations. The target CRS is fixed; this stage never submits LCA.
