@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contracts/jsonschema/jug_sim_buildings/scenario_001_evaluation.schema.json",
+  "title": "Scenario 001 Evaluation Evidence",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "run_id",
+    "fsa",
+    "status",
+    "criteria",
+    "error",
+    "cleanup_errors",
+    "provenance",
+    "artifacts",
+    "timeout_policy"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$"
+    },
+    "fsa": {
+      "type": "string",
+      "pattern": "^[A-Z][0-9][A-Z]$"
+    },
+    "status": {
+      "enum": [
+        "succeeded",
+        "succeeded_with_cleanup_errors",
+        "failed"
+      ]
+    },
+    "criteria": {
+      "type": "object",
+      "required": [
+        "end_to_end_execution",
+        "contract_compliance",
+        "traceability",
+        "failure_handling"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "end_to_end_execution": {
+          "type": "object",
+          "required": [
+            "status",
+            "evidence"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "passed",
+                "failed",
+                "not_evaluated",
+                "incomplete",
+                "failure_recorded",
+                "not_exercised"
+              ]
+            },
+            "evidence": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "note": {
+              "type": "string"
+            }
+          }
+        },
+        "contract_compliance": {
+          "type": "object",
+          "required": [
+            "status",
+            "evidence"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "passed",
+                "failed",
+                "not_evaluated",
+                "incomplete",
+                "failure_recorded",
+                "not_exercised"
+              ]
+            },
+            "evidence": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "note": {
+              "type": "string"
+            }
+          }
+        },
+        "traceability": {
+          "type": "object",
+          "required": [
+            "status",
+            "evidence"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "passed",
+                "failed",
+                "not_evaluated",
+                "incomplete",
+                "failure_recorded",
+                "not_exercised"
+              ]
+            },
+            "evidence": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "note": {
+              "type": "string"
+            }
+          }
+        },
+        "failure_handling": {
+          "type": "object",
+          "required": [
+            "status",
+            "evidence"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "passed",
+                "failed",
+                "not_evaluated",
+                "incomplete",
+                "failure_recorded",
+                "not_exercised"
+              ]
+            },
+            "evidence": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "note": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "error": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "cleanup_errors": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "provenance": {
+      "type": "string"
+    },
+    "artifacts": {
+      "type": "object"
+    },
+    "timeout_policy": {
+      "type": "string"
+    }
+  },
+  "description": "Evidence for a single run. Success does not establish controlled failure-injection coverage or complete upstream provenance."
+}

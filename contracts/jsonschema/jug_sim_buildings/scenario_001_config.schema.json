@@ -60,7 +60,7 @@
     "preparation_enabled": {
       "type": "boolean",
       "default": false,
-      "description": "Run local LCA preparation after successful uniquification; no LCA submission."
+      "description": "Run local LCA preparation after successful uniquification; submission requires separate lca_enabled opt-in."
     },
     "preparation_measurement_crs": {
       "type": "string",
@@ -94,6 +94,39 @@
       "pattern": "\\S",
       "default": null,
       "description": "Optional QGIS coordinate operation. Unavailable/invalid operations fail; target is fixed to EPSG:4326."
+    },
+    "lca_enabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Submit the exact prepared artifact to LCA after successful preparation."
+    },
+    "lca_url": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/serviceUrl"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "lca_connect_timeout_seconds": {
+      "$ref": "#/$defs/positiveTimeout",
+      "default": 10
+    },
+    "lca_read_timeout_seconds": {
+      "$ref": "#/$defs/positiveTimeout",
+      "default": 7200
+    },
+    "evaluation_provenance_path": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "\\S",
+      "default": null,
+      "description": "Optional operator-supplied JSON provenance manifest; relative to configuration file."
     }
   },
   "allOf": [
@@ -158,6 +191,32 @@
           "preparation_source_crs": {
             "type": "string",
             "pattern": "\\S"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "lca_enabled"
+        ],
+        "properties": {
+          "lca_enabled": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "preparation_enabled",
+          "lca_url"
+        ],
+        "properties": {
+          "preparation_enabled": {
+            "const": true
+          },
+          "lca_url": {
+            "$ref": "#/$defs/serviceUrl"
           }
         }
       }
