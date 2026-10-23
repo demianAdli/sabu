@@ -24,7 +24,7 @@ from jug_sim_buildings.scenario_001.contracts import ContractError, load_json
 from jug_sim_buildings.scenario_001.lca_submission import submit_prepared
 from jug_sim_buildings.scenario_001.preparation import prepare_run
 from test_http_transport import ControlledResponse
-from test_scenario_001_lca_results import result
+from test_scenario_001_lca_results import result, exclusion, outcome
 from test_scenario_001_preparation import saved_run, feature, ControlledReprojector
 
 
@@ -43,7 +43,7 @@ class TestLCASubmission(unittest.TestCase):
 
     def submit(self, response):
         def request(method, url, **kwargs):
-            self.assertEqual(url, 'http://lca/prefix/emissions')
+            self.assertEqual(url, 'http://lca/prefix/emissions?include_exclusions=true')
             self.assertEqual(kwargs['data'].read(), Path(self.prepared['lca_input_path']).read_bytes())
             self.assertEqual(kwargs['headers']['X-Request-ID'], self.store.run_id)
             self.assertEqual(kwargs['timeout'], (4, 99))
@@ -57,9 +57,9 @@ class TestLCASubmission(unittest.TestCase):
                 self.calls = call.call_count
 
     def test_exact_bytes_and_reordered_results(self):
-        response = ControlledResponse(json.dumps([result(11), result(10)]).encode(), 201)
-        outcome = self.submit(response)
-        self.assertEqual(outcome['submitted'], 2)
+        response = ControlledResponse(json.dumps(outcome([result(11), result(10)])).encode(), 201)
+        completed = self.submit(response)
+        self.assertEqual(completed['submitted'], 2)
         self.assertEqual(self.calls, 1)
         self.assertEqual(self.stages, ['lca_submission', 'lca_contract'])
         self.assertEqual(self.store.path('requests/lca.geojson').read_bytes(),
@@ -75,10 +75,23 @@ class TestLCASubmission(unittest.TestCase):
 
     def test_response_ids_must_account_for_all_inputs(self):
         with self.assertRaises(ContractError):
-            self.submit(ControlledResponse(json.dumps([result(10)]).encode(), 201))
+            self.submit(ControlledResponse(json.dumps(outcome([result(10)])).encode(), 201))
         report = load_json(self.store.path('lca/reconciliation.json'))
         self.assertEqual(report['missing_ids'], [11])
         self.assertTrue(self.store.path('responses/lca.body').exists())
+        self.assertFalse(self.store.path('lca/summary.json').exists())
+
+    def test_valid_exclusions_are_preserved_without_changing_submitted_bytes(self):
+        completed = self.submit(ControlledResponse(json.dumps(outcome([result(11)], [exclusion(10)])).encode(), 201))
+        self.assertEqual((completed['calculated'], completed['excluded']), (1, 1))
+        self.assertEqual(load_json(self.store.path('lca/exclusions.json'))[0]['feature_id'], 10)
+        self.assertEqual(completed['summary']['buildings'], 1)
+
+    def test_all_excluded_preserves_decisions_but_does_not_publish_zero_carbon(self):
+        with self.assertRaisesRegex(ContractError, 'All submitted records were excluded'):
+            self.submit(ControlledResponse(json.dumps(outcome([], [exclusion(10), exclusion(11)])).encode(), 201))
+        self.assertEqual(len(load_json(self.store.path('lca/exclusions.json'))), 2)
+        self.assertEqual(load_json(self.store.path('lca/reconciliation.json'))['status'], 'succeeded')
         self.assertFalse(self.store.path('lca/summary.json').exists())
 
     def test_tampered_preparation_prevents_http(self):

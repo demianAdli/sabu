@@ -12,7 +12,7 @@ www.demianadli.com
 from copy import deepcopy
 import unittest
 
-from jug_sim_buildings.scenario_001.lca_results import reconcile_results, carbon_summary
+from jug_sim_buildings.scenario_001.lca_results import reconcile_results, reconcile_outcome, carbon_summary
 
 
 def result(identifier):
@@ -22,7 +22,37 @@ def result(identifier):
             'component_end_of_life_emissions': 9.}
 
 
+def exclusion(identifier, area=10.):
+    return {'feature_id': identifier, 'reason_code': 'reader_floor_area_below_minimum',
+            'field': 'geometry', 'reason': 'Reader floor area below existing minimum.',
+            'reader_floor_area_m2': area, 'minimum_floor_area_m2': 25.}
+
+
+def outcome(results, exclusions=None):
+    exclusions = exclusions or []
+    return {'schema_version': 1, 'results': results, 'exclusions': exclusions,
+            'counts': {'submitted': len(results) + len(exclusions), 'calculated': len(results), 'excluded': len(exclusions)}}
+
+
 class TestLCAResults(unittest.TestCase):
+    def test_results_and_evidenced_exclusions_partition_submissions(self):
+        report, mapped = reconcile_outcome(outcome([result(8)], [exclusion(3)]), [3, 8])
+        self.assertEqual(report['status'], 'succeeded')
+        self.assertEqual((report['calculated'], report['excluded'], report['accounted']), (1, 1, 2))
+        self.assertEqual(carbon_summary(mapped)['total_reported_lca_scope'], 12.)
+
+    def test_bad_exclusions_overlap_counts_and_unexplained_omissions_fail(self):
+        values = [outcome([result(1)], [exclusion(1)]),
+                  outcome([result(1)], [exclusion(2), exclusion(2)]),
+                  outcome([result(1)], [exclusion(9)]),
+                  outcome([result(1)]), outcome([result(1)], [exclusion(2, 25)]),
+                  outcome([result(1)], [{**exclusion(2), 'reason_code': 'unknown'}]),
+                  outcome([result(1)], [{**exclusion(2), 'reader_floor_area_m2': True}]),
+                  {**outcome([result(1)], [exclusion(2)]), 'counts': {'submitted': 2, 'calculated': 2, 'excluded': 0}}]
+        for payload in values:
+            with self.subTest(payload=payload):
+                self.assertEqual(reconcile_outcome(payload, [1, 2])[0]['status'], 'failed')
+
     def test_shuffled_identified_results_and_no_double_counting(self):
         report, mapped = reconcile_results([result(8), result(3)], [3, 8])
         self.assertEqual(report['status'], 'succeeded')

@@ -26,7 +26,7 @@ from jug_sim_buildings.scenario_001.traceability import json_lines
 from jug_sim_buildings.scenario_001.workflow import run_scenario, ScenarioRunError
 from test_scenario_001_workflow import workflow_fixture, json_response
 from test_scenario_001_preparation import ControlledReprojector
-from test_scenario_001_lca_results import result
+from test_scenario_001_lca_results import result, exclusion, outcome
 
 
 class Backend(ControlledReprojector):
@@ -52,7 +52,7 @@ class TestCompleteScenario(unittest.TestCase):
         collection['features'][-1]['properties']['height'] = None
         uniquification['retained_geojson']['features'][-1]['properties']['height'] = None
         self.payloads = [preprocessing, collection, uniquification,
-                         [result(100004), result(100001), result(100003)]]
+                         outcome([result(100004), result(100001), result(100003)])]
         self.calls = []
 
     def execute(self, responses):
@@ -116,15 +116,55 @@ class TestCompleteScenario(unittest.TestCase):
                 self.config = replace(self.config, output_root=self.root)
 
     def test_identifier_mismatch_is_failure_even_with_equal_counts(self):
-        self.payloads[-1][-1]['feature_id'] = 999
+        self.payloads[-1]['results'][-1]['feature_id'] = 999
         with self.assertRaisesRegex(ScenarioRunError, 'Unresolved LCA result'):
             self.execute(self.responses())
         self.assertEqual(len(self.calls), 4)
         report = load_json(self.directory / 'lca/reconciliation.json')
         self.assertEqual(report['unexpected_ids'], [999])
         self.assertFalse((self.directory / 'lca/summary.json').exists())
+
+        evaluation = load_json(self.directory / 'reports/evaluation.json')
+        self.assertEqual(evaluation['criteria']['end_to_end_execution']['status'], 'failed')
         rows = json_lines(self.directory / 'trace/records.jsonl')
         self.assertTrue(any(row['lca'] and row['lca']['status'] == 'unresolved' for row in rows))
+
+    def test_documented_lca_exclusion_keeps_full_trace_and_only_calculated_carbon(self):
+        self.payloads[-1] = outcome([result(100003), result(100001)], [exclusion(100004)])
+        completed = self.execute(self.responses())
+        self.assertEqual((completed['lca']['submitted'], completed['lca']['calculated'], completed['lca']['excluded']), (3, 2, 1))
+        self.assertEqual(completed['lca']['summary']['total_reported_lca_scope'], 24.)
+        rows = json_lines(self.directory / 'trace/records.jsonl')
+        excluded = [row for row in rows if row['lca'] and row['lca']['status'] == 'excluded']
+        self.assertEqual(len(excluded), 1)
+        self.assertEqual(excluded[0]['source']['feature_id'], 100004)
+        self.assertIsNone(excluded[0]['lca']['result_artifact'])
+        self.assertEqual(excluded[0]['lca']['exclusion']['reason_code'], 'reader_floor_area_below_minimum')
+        trace = load_json(self.directory / 'trace/reconciliation.json')
+        self.assertEqual((trace['identified_results'], trace['lca_exclusions'], trace['unresolved_submissions']), (2, 1, 0))
+        evaluation = load_json(self.directory / 'reports/evaluation.json')
+        self.assertEqual(evaluation['criteria']['end_to_end_execution']['status'], 'passed')
+        self.assertEqual(evaluation['lca_outcomes']['excluded'], 1)
+
+    def test_all_excluded_fails_with_resolved_exclusion_histories(self):
+        self.payloads[-1] = outcome([], [exclusion(i) for i in (100001, 100003, 100004)])
+        with self.assertRaisesRegex(ScenarioRunError, 'All submitted records were excluded'):
+            self.execute(self.responses())
+        rows = json_lines(self.directory / 'trace/records.jsonl')
+        self.assertEqual(sum(row['lca'] is not None and row['lca']['status'] == 'excluded' for row in rows), 3)
+        self.assertFalse((self.directory / 'lca/summary.json').exists())
+        evaluation = load_json(self.directory / 'reports/evaluation.json')
+        self.assertEqual(evaluation['lca_outcomes'], {'submitted': 3, 'calculated': 0, 'excluded': 3})
+        self.assertEqual(evaluation['criteria']['traceability']['status'], 'passed')
+        self.assertEqual(evaluation['criteria']['contract_compliance']['status'], 'passed')
+        self.assertEqual(evaluation['criteria']['end_to_end_execution']['status'], 'failed')
+
+    def test_unsupported_exclusion_is_not_used_to_hide_a_missing_result(self):
+        self.payloads[-1] = outcome([result(100003), result(100001)], [{**exclusion(100004), 'reason_code': 'unknown'}])
+        with self.assertRaisesRegex(ScenarioRunError, 'Unresolved LCA result'):
+            self.execute(self.responses())
+        self.assertFalse((self.directory / 'lca/exclusions.json').exists())
+        self.assertTrue((self.directory / 'responses/lca.body').exists())
 
     def test_preparation_failure_prevents_lca_and_preserves_rejections(self):
         for feature in self.payloads[1]['features'] + self.payloads[2]['retained_geojson']['features']:
