@@ -7,11 +7,19 @@ Files
 - `emissions.multipolygon.request.json`: One multipart building with an interior hole
 - `emissions.mixed.request.json`: Polygon and MultiPolygon buildings in one collection
 - `emissions.response.201.json`: Example success response (201)
+- `emissions.reader_outcome.response.201.json`: Opt-in results/exclusions/counts response (illustrative, not measured H3B output)
 - `emissions.response.200.csv`: Example CSV download response for `POST /emissions?export=csv`
 - `emissions_upload.response.400.invalid_json.json`: Example error when uploaded file is not valid JSON
 - `emissions_upload.response.422.validation.json`: Example schema validation error for a missing required property in the second feature
 
 Notes
+- Both endpoints accept `?include_exclusions=true` for a versioned JSON outcome:
+  every submitted ID appears exactly once in results or documented exclusions,
+  and submitted = calculated + excluded. Exclusions include the actual reader
+  floor area in m2 and the existing 25 m2 minimum; calculations use remaining
+  buildings only. Unknown omissions still fail. All-excluded outcomes have empty
+  results. Default responses remain strict arrays; combining the option with CSV
+  returns 400. See `reader_outcome.schema.json` under this service's JSON schemas.
 - For `POST /emissions/upload`, upload a GeoJSON file whose JSON content matches any of the request examples.
 - `POST /emissions` and `POST /emissions/upload` support `?export=csv` to return a downloadable CSV report (`200 text/csv`) instead of the JSON response (`201 application/json`).
 - Unknown fields on FeatureCollection, Feature, Geometry, and Properties objects are accepted and excluded from computation, caching, and reporting. The original object/file is preserved.

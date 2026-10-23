@@ -1,10 +1,11 @@
-﻿[
+[
   {
     "opening_embodied_emissions": 1.0,
     "envelope_embodied_emissions": 2.0,
     "component_embodied_emissions": 3.0,
     "opening_end_of_life_emissions": 4.0,
     "envelope_end_of_life_emissions": 5.0,
-    "component_end_of_life_emissions": 6.0
+    "component_end_of_life_emissions": 9.0,
+    "feature_id": 1
   }
 ]

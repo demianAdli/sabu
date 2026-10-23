@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "results": [
+    {
+      "opening_embodied_emissions": 1.0,
+      "envelope_embodied_emissions": 2.0,
+      "component_embodied_emissions": 3.0,
+      "opening_end_of_life_emissions": 4.0,
+      "envelope_end_of_life_emissions": 5.0,
+      "component_end_of_life_emissions": 9.0,
+      "feature_id": 1
+    }
+  ],
+  "exclusions": [
+    {
+      "feature_id": 2,
+      "reason_code": "reader_floor_area_below_minimum",
+      "field": "geometry",
+      "reason": "Reader floor area is below its existing 25 m2 minimum.",
+      "reader_floor_area_m2": 12.5,
+      "minimum_floor_area_m2": 25.0
+    }
+  ],
+  "counts": {
+    "submitted": 2,
+    "calculated": 1,
+    "excluded": 1
+  }
+}
