@@ -20,6 +20,7 @@ SCENARIO_RULES = [
     'Prepared IDs are unique nonnegative integers no greater than 2**53-1.',
     'Required strings must be nonblank; height and construction year must be positive.',
     'Construction years must be exact integers, never truncated.',
+    'citygisoo_area must be present, numeric, finite, and at least 25 m2.',
     'Geometry must be a nonempty valid Polygon/MultiPolygon with closed rings.',
 ]
 
@@ -58,6 +59,22 @@ def normalize_feature(feature):
                 changes.append({'field': key, 'original': value, 'normalized': normalized})
         except (ValidationError, ValueError, TypeError, OverflowError, InvalidOperation) as exc:
             error(f'properties.{key}', str(exc), value)
+
+    area_value = properties.get('citygisoo_area')
+    try:
+        if 'citygisoo_area' not in properties:
+            raise ValueError('citygisoo_area is missing.')
+        if area_value is None:
+            raise ValueError('citygisoo_area is null.')
+        if isinstance(area_value, bool):
+            raise ValueError('Boolean is not a citygisoo_area.')
+        area = fields.Float(required=True).deserialize(area_value)
+        if not math.isfinite(area):
+            raise ValueError('citygisoo_area must be finite.')
+        if area < 25:
+            raise ValueError('citygisoo_area is below the minimum of 25 m2 (scenario rule).')
+    except (ValidationError, ValueError, TypeError, OverflowError) as exc:
+        error('properties.citygisoo_area', str(exc), area_value)
 
     geometry = output.get('geometry')
     try:
