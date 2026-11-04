@@ -15,12 +15,13 @@ import math
 
 from marshmallow import ValidationError, fields
 
+from .eligibility_rules import eligibility_rule_descriptions, evaluate_eligibility
+
 
 SCENARIO_RULES = [
     'Prepared IDs are unique nonnegative integers no greater than 2**53-1.',
-    'Required strings must be nonblank; height and construction year must be positive.',
     'Construction years must be exact integers, never truncated.',
-    'citygisoo_area must be present, numeric, finite, and at least 25 m2.',
+    *eligibility_rule_descriptions(),
     'Geometry must be a nonempty valid Polygon/MultiPolygon with closed rings.',
 ]
 
@@ -39,20 +40,18 @@ def normalize_feature(feature):
         try:
             if key in ('name', 'address', 'function'):
                 normalized = fields.String(required=True).deserialize(value).strip()
-                if not normalized:
-                    raise ValueError('Required string is blank (scenario rule).')
             elif key == 'height':
                 if isinstance(value, bool):
                     raise ValueError('Boolean is not a height.')
                 normalized = fields.Float(required=True).deserialize(value)
-                if not math.isfinite(normalized) or normalized <= 0:
+                if not math.isfinite(normalized):
                     raise ValueError('Height must be finite and positive (scenario rule).')
             else:
                 if isinstance(value, bool):
                     raise ValueError('Boolean is not a construction year.')
                 normalized = fields.Integer(required=True).deserialize(value)
                 exact = Decimal(str(value))
-                if not exact.is_finite() or exact != normalized or normalized <= 0:
+                if not exact.is_finite() or exact != normalized:
                     raise ValueError('Year must be a positive exact integer (scenario rule).')
             properties[key] = normalized
             if type(value) is not type(normalized) or value != normalized:
@@ -60,21 +59,16 @@ def normalize_feature(feature):
         except (ValidationError, ValueError, TypeError, OverflowError, InvalidOperation) as exc:
             error(f'properties.{key}', str(exc), value)
 
-    area_value = properties.get('citygisoo_area')
-    try:
-        if 'citygisoo_area' not in properties:
-            raise ValueError('citygisoo_area is missing.')
-        if area_value is None:
-            raise ValueError('citygisoo_area is null.')
-        if isinstance(area_value, bool):
-            raise ValueError('Boolean is not a citygisoo_area.')
-        area = fields.Float(required=True).deserialize(area_value)
-        if not math.isfinite(area):
-            raise ValueError('citygisoo_area must be finite.')
-        if area < 25:
-            raise ValueError('citygisoo_area is below the minimum of 25 m2 (scenario rule).')
-    except (ValidationError, ValueError, TypeError, OverflowError) as exc:
-        error('properties.citygisoo_area', str(exc), area_value)
+    policy_errors = evaluate_eligibility(
+        properties, original_properties=feature['properties'],
+        invalid_fields=[e['field'].removeprefix('properties.') for e in errors])
+    rejected_fields = {e['field'].removeprefix('properties.') for e in policy_errors}
+    # As before, rejected values are not published as successful normalizations.
+    for key in rejected_fields:
+        if key in feature['properties']:
+            properties[key] = deepcopy(feature['properties'][key])
+    changes = [change for change in changes if change['field'] not in rejected_fields]
+    errors.extend(policy_errors)
 
     geometry = output.get('geometry')
     try:
