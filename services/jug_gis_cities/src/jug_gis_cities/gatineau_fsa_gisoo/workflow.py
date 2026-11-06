@@ -113,10 +113,6 @@ def run_workflow(fsa):
         paths.qgis_path,
         paths.input_paths['gatineau_mahm_usage_2026_gpkg'],
         'usage_Gatineau')
-      usage_dup_Gatineau = ScrubLayer(
-        paths.qgis_path,
-        paths.input_paths['gatineau_usage_dup'],
-        'usage_dup_Gatineau')
       fsa_layer = ScrubLayer(
         paths.qgis_path,
         paths.input_paths['fsa'],
@@ -125,7 +121,6 @@ def run_workflow(fsa):
       _log_layer_summary(nrcan_Gatineau)
       _log_layer_summary(nrcan_preserved_Gatineau)
       _log_layer_summary(usage_Gatineau)
-      _log_layer_summary(usage_dup_Gatineau)
       _log_layer_summary(fsa_layer)
 
     with _workflow_step('extract FSA boundary', normalized_fsa):
@@ -179,14 +174,6 @@ def run_workflow(fsa):
         normalized_fsa,
         layer_name=f'usage_clipped_{normalized_fsa}')
 
-      usage_dup_Gatineau.clip_layer(
-        fsa_boundary.layer_path,
-        output_paths['usage_dup'])
-      usage_dup = _load_output_layer(
-        output_paths,
-        'usage_dup',
-        normalized_fsa)
-
     with _workflow_step('fix nrcan geometries', normalized_fsa):
       nrcan.fix_geometries(output_paths['nrcan_fixed'])
       nrcan_fixed = _load_output_layer(
@@ -214,8 +201,14 @@ def run_workflow(fsa):
         'usage_fixed',
         normalized_fsa)
 
-    with _workflow_step('fix usage duplicate geometries', normalized_fsa):
-      usage_dup.fix_geometries(output_paths['usage_dup_fixed'])
+    with _workflow_step('remove excluded usage codes', normalized_fsa):
+      for usage_code in ('9100', '4561', '6242'):
+        usage_fixed.conditional_delete_record('g_utilisat', '=', usage_code)
+      usage_fixed.data_count = usage_fixed.layer.featureCount()
+      _log_layer_summary(usage_fixed)
+
+    with _workflow_step('duplicate filtered usage', normalized_fsa):
+      usage_fixed.duplicate_layer(output_paths['usage_dup_fixed'])
       usage_dup_fixed = _load_output_layer(
         output_paths,
         'usage_dup_fixed',
@@ -239,7 +232,7 @@ def run_workflow(fsa):
 
     with _workflow_step('difference usage with usage margin san',
                         normalized_fsa):
-      usage.difference_layer(
+      usage_fixed.difference_layer(
         overlay_layer=usage_margin_san,
         output_path=output_paths['usage_clean'])
       usage_clean = _load_output_layer(
@@ -285,7 +278,7 @@ def run_workflow(fsa):
                         normalized_fsa):
       processor.extract_by_membership(
         source_layer=roll,
-        lookup_layer=usage,
+        lookup_layer=usage_fixed,
         source_field='id_provinc',
         lookup_field='g_id_provi',
         output_path=output_paths['roll_only'],
@@ -298,7 +291,7 @@ def run_workflow(fsa):
 
     with _workflow_step('spatial join usage with roll-only',
                         normalized_fsa):
-      usage.spatial_join_with_predicate(
+      usage_fixed.spatial_join_with_predicate(
         joining_layer_path=roll_only.layer_path,
         joined_layer_path=output_paths['usage_roll_only_all'],
         predicate='contains',

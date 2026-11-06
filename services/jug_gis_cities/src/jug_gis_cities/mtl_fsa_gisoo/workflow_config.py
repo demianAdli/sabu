@@ -46,11 +46,6 @@ input_paths = {
     input_data_dir,
     'mamh_usage_predo_2026_gpkg',
     'mamh_usage_predo_2026_s_poly.gpkg'),
-  'mtl_usage_dup':
-  os.path.join(
-    input_data_dir,
-    'mamh_usage_predo_2026_gpkg_dup',
-    'mamh_usage_predo_2026_dup.gpkg'),
   'fsa':
   os.path.join(
     input_data_dir,
@@ -88,7 +83,6 @@ def get_fsa_output_paths_dir(fsa):
 output_paths = {
   'fsa_boundary': '',
   'nrcan_preserved': '',
-  'usage_dup': '',
   'nrcan': '',
   'usage': '',
   'roll': '',
