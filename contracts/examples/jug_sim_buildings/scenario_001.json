@@ -1,6 +1,7 @@
 {
   "gis_cities_url": "http://127.0.0.1:5101",
   "gis_validation_url": "http://127.0.0.1:5102",
+  "component_name": "mtl_fsa_gisoo",
   "fsa": "H3B",
   "output_root": "../../../output_files/scenario_001",
   "connect_timeout_seconds": 10,

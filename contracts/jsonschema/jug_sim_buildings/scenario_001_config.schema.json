@@ -17,6 +17,12 @@
     "gis_validation_url": {
       "$ref": "#/$defs/serviceUrl"
     },
+    "component_name": {
+      "type": "string",
+      "pattern": "^\\s*[A-Za-z_][A-Za-z0-9_]*\\s*$",
+      "default": "mtl_fsa_gisoo",
+      "description": "GIS Cities component package name. Runtime trims surrounding whitespace. The --component CLI argument overrides this setting. The selected component must support FSA standardization and the scenario's downstream contracts."
+    },
     "output_root": {
       "type": "string",
       "pattern": "\\S",

@@ -25,6 +25,16 @@ The consumed HTTP contracts remain owned by
 [`jug_gis_cities`](../jug_gis_cities/README.md) and
 [`jug_gis_validation`](../jug_gis_validation/README.md).
 
+`component_name` selects the GIS Cities component and defaults to `mtl_fsa_gisoo`
+when omitted. Pass `--component gatineau_fsa_gisoo` to override the JSON setting.
+Set `fsa` to an area covered by that component's input data, such as J8Y for
+Gatineau. The selected component must support FSA standardization and produce the
+fields required by scenario preprocessing, uniquification, and optional LCA.
+The response must identify the selected component. GIS Cities uses that
+component's own data/output environment variables; changing directories does not
+select a component. Complete Windows startup and scenario commands are in the
+[Gatineau PowerShell example](../../../services/jug_sim_buildings/README.md#gatineau-j8y-with-powershell).
+
 The sample FSA is H3B. Preparation is disabled by default; enable
 `preparation_enabled` to produce a separate eligible EPSG:4326 LCA input after
 uniquification. `--prepare-from-run <run-directory>` prepares existing artifacts
