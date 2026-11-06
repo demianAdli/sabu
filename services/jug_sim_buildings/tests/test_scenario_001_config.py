@@ -53,6 +53,7 @@ class TestScenarioConfig(unittest.TestCase):
 
     def test_defaults_and_cleanup_forwarding(self):
         config = self.config()
+        self.assertEqual(config.component_name, 'mtl_fsa_gisoo')
         self.assertEqual(config.preprocessing_request(), {
             'mode': 'standardize', 'fsa': 'H2M', 'cleanup_outputs': True, 'keep_outputs': []})
         self.assertEqual(config.gis_cities_url, 'http://cities/api')
@@ -62,6 +63,13 @@ class TestScenarioConfig(unittest.TestCase):
         self.assertEqual(config.preprocessing_request()['keep_outputs'], ['usage_clean', 'inter_summary'])
         self.assertEqual(config.fsa, 'H2M')
 
+    def test_component_names_are_trimmed_and_preserved_in_configuration(self):
+        for name in ('mtl_fsa_gisoo', 'gatineau_fsa_gisoo', '_custom_component_2'):
+            with self.subTest(name=name):
+                config = self.config(component_name=f' {name} ')
+                self.assertEqual(config.component_name, name)
+                self.assertEqual(config.as_dict()['component_name'], name)
+
     def test_invalid_configuration_is_rejected_before_network_or_output(self):
         cases = [
             {'cleanup_outputs': False, 'keep_outputs': ['usage_clean']},
@@ -69,6 +77,10 @@ class TestScenarioConfig(unittest.TestCase):
             {'keep_outputs': ['']}, {'keep_outputs': [3]}, {'fsa': '../H2M'},
             {'fsa': 123}, {'output_root': ''},
         ]
+        cases.extend({'component_name': value} for value in (
+            None, 123, True, '', '  ', '../gatineau_fsa_gisoo', 'city/component',
+            'city\\component', 'city.component', 'city?fsa=J8Y', 'city#fragment',
+            'city%2Fcomponent', 'two components', '1city'))
         for key in ('connect_timeout_seconds', 'preprocess_read_timeout_seconds',
                     'download_read_timeout_seconds', 'uniquification_read_timeout_seconds'):
             cases.extend({key: value} for value in (0, -1, float('nan'), float('inf'), True, '10'))
@@ -91,6 +103,42 @@ class TestScenarioConfig(unittest.TestCase):
             path.write_text(json.dumps(values))
             with self.assertRaises(TypeError):
                 ScenarioConfig.from_file(path)
+
+    def test_cli_component_overrides_file_setting_and_preserves_default(self):
+        cases = [
+            ({}, [], 'mtl_fsa_gisoo'),
+            ({'component_name': 'gatineau_fsa_gisoo'}, [], 'gatineau_fsa_gisoo'),
+            ({'component_name': 'mtl_fsa_gisoo'}, ['--component', 'gatineau_fsa_gisoo'],
+             'gatineau_fsa_gisoo'),
+            ({'component_name': 'gatineau_fsa_gisoo'}, ['--component', 'mtl_fsa_gisoo'],
+             'mtl_fsa_gisoo'),
+        ]
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / 'scenario.json'
+            for setting, arguments, expected in cases:
+                with self.subTest(setting=setting, arguments=arguments):
+                    path.write_text(json.dumps({
+                        'gis_cities_url': 'http://cities', 'gis_validation_url': 'http://validation',
+                        'output_root': 'runs', **setting}))
+                    with patch('jug_sim_buildings.logging_setup.configure_service_logging'), \
+                            patch('jug_sim_buildings.scenario_001.workflow.run_scenario',
+                                  return_value={'status': 'succeeded'}) as run, \
+                            contextlib.redirect_stdout(io.StringIO()):
+                        self.assertEqual(main(['--config', str(path), *arguments]), 0)
+                    self.assertEqual(run.call_args.args[0].component_name, expected)
+            self.assertFalse((Path(directory) / 'runs').exists())
+
+    def test_invalid_cli_component_stops_before_logging_or_run(self):
+        with patch.object(ScenarioConfig, 'from_file', return_value=self.config()), \
+                patch('jug_sim_buildings.logging_setup.configure_service_logging') as logging, \
+                patch('jug_sim_buildings.scenario_001.workflow.run_scenario') as run:
+            for name in ('', '../gatineau_fsa_gisoo', 'city?x=1'):
+                with self.subTest(name=name), contextlib.redirect_stderr(io.StringIO()), \
+                        self.assertRaises(SystemExit) as caught:
+                    main(['--config', 'config.json', '--component', name])
+                self.assertEqual(caught.exception.code, 2)
+            logging.assert_not_called()
+            run.assert_not_called()
 
     def test_cli_help_and_invalid_config_have_no_logging_or_network_side_effects(self):
         with TemporaryDirectory() as directory:

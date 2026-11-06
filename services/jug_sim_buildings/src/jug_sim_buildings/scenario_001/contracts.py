@@ -53,7 +53,7 @@ def load_json(path):
 
 def validate_preprocessing(result, config):
     require(isinstance(result, dict), 'Preprocessing response must be an object.')
-    require(result.get('component_name') == 'mtl_fsa_gisoo', 'Unexpected component_name.')
+    require(result.get('component_name') == config.component_name, 'Unexpected component_name.')
     require(result.get('mode') == 'standardize', 'Unexpected preprocessing mode.')
     require(result.get('fsa') == config.fsa, 'Unexpected preprocessing FSA.')
     for key in ('workflow_output_path', 'standardized_output_path'):

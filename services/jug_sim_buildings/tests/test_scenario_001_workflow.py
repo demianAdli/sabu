@@ -10,6 +10,7 @@ www.demianadli.com
 """
 
 from copy import deepcopy
+from dataclasses import replace
 import hashlib
 import json
 from pathlib import Path
@@ -233,6 +234,38 @@ class TestScenarioWorkflow(unittest.TestCase):
         self.assertFalse(sources[2]['feature_id_present'])
         self.assertIsNone(sources[2]['feature_id'])
         self.assertEqual(sources[0]['source_identifiers']['roll_provincial_id'], '0001')
+
+    def test_gatineau_component_routes_j8y_and_preserves_selected_configuration(self):
+        preprocessing, collection, result = workflow_fixture()
+        config = replace(self.config, component_name='gatineau_fsa_gisoo', fsa='J8Y')
+        preprocessing.update(component_name=config.component_name, fsa=config.fsa)
+        for feature in collection['features'] + result['retained_geojson']['features']:
+            feature['properties']['FSA'] = config.fsa
+        outcome = self.execute([json_response(preprocessing, 201), json_response(collection),
+                                json_response(result)], config=config)
+        directory = Path(outcome['run_directory'])
+        self.assertEqual(outcome['status'], 'succeeded')
+        self.assertEqual(directory.parent, self.root / 'J8Y')
+        self.assertEqual(self.calls[0]['url'],
+                         'http://cities/api/components/gatineau_fsa_gisoo/runs')
+        self.assertEqual(json.loads(self.calls[0]['body'])['fsa'], 'J8Y')
+        for relative in ('run.json', 'reports/provenance.json'):
+            self.assertEqual(load_json(directory / relative)['configuration']['component_name'],
+                             'gatineau_fsa_gisoo')
+
+    def test_response_must_identify_selected_component_before_download(self):
+        preprocessing, _, _ = workflow_fixture()
+        for selected, returned in (('gatineau_fsa_gisoo', 'mtl_fsa_gisoo'),
+                                   ('mtl_fsa_gisoo', 'gatineau_fsa_gisoo')):
+            with self.subTest(selected=selected), TemporaryDirectory() as directory:
+                config = replace(self.config, output_root=Path(directory), component_name=selected)
+                self.calls = []
+                with self.assertRaisesRegex(ScenarioRunError, 'Unexpected component_name'):
+                    self.execute([json_response(preprocessing | {'component_name': returned}, 201)],
+                                 config=config)
+                self.assertEqual(len(self.calls), 1)
+                self.assertEqual(self.calls[0]['url'],
+                                 f'http://cities/api/components/{selected}/runs')
 
     def test_required_input_persistence_failure_prevents_uniquification(self):
         preprocessing, collection, _ = workflow_fixture()

@@ -54,8 +54,13 @@ class ScenarioConfig:
     lca_connect_timeout_seconds: float = 10
     lca_read_timeout_seconds: float = 7200
     evaluation_provenance_path: str | None = None
+    component_name: str = 'mtl_fsa_gisoo'
 
     def __post_init__(self):
+        if (not isinstance(self.component_name, str)
+                or not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*', self.component_name.strip())):
+            raise ValueError('component_name must be a valid GIS Cities component package name.')
+        object.__setattr__(self, 'component_name', self.component_name.strip())
         for key in ('gis_cities_url', 'gis_validation_url'):
             object.__setattr__(self, key, http_url(getattr(self, key)))
         if not isinstance(self.fsa, str):

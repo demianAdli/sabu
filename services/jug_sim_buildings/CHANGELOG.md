@@ -3,6 +3,9 @@
 ## [Unreleased]
 
 ### Added
+- Configurable-in-code preparation eligibility rules with reusable nonblank,
+  minimum-value, and disallowed-value checks. Exclude function codes 6911 and 2699
+  for insufficient LCA data using existing rejection and trace reports.
 - Explicit LCA reader exclusions with measured reasons, disjoint result/exclusion
   ID reconciliation, per-record histories and calculated-only carbon summaries.
   Preserve all-excluded evidence without reporting zero carbon as a successful run.
@@ -38,6 +41,9 @@
 - Focused foundation tests and installation/startup instructions.
 
 ### Changed
+- Separate preparation eligibility policy from field/geometry normalization,
+  preserving existing checks, original rejected values, and area thresholds.
+  Generate eligibility descriptions from rule definitions in preparation metadata.
 - Resolve checkout logs from the service root, with a user-state fallback for
   installed wheels and preserved explicit LOG_* overrides.
 - Group new run artifacts by FSA and expose the full retained-output path;

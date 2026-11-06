@@ -9,6 +9,7 @@ alireza.adli4@gmail.com
 www.demianadli.com
 """
 
+
 def get_health() -> dict[str, str]:
     """Report process health without running scenarios or external checks."""
     return {'service': 'jug_sim_buildings', 'status': 'ok'}

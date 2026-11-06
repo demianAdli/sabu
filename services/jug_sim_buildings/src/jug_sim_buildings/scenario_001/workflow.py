@@ -49,7 +49,7 @@ def run_scenario(config, *, transport=None, run_id=None):
         'started_at': utc_now(), 'status': 'running', 'stage': 'initializing',
         'configuration': config.as_dict(), 'artifacts': {}, 'stage_outcomes': [],
         'contract_notes': [
-            'Generic standardized GeoJSON schema differs from Montreal adapter fields.',
+            'Generic standardized GeoJSON schema differs from component adapter fields.',
             'CRS is not guaranteed; preserve declarations, otherwise record unknown.',
             'Uniquification omits top-level IDs; join source_records by run_id/input_position.',
         ],
@@ -85,7 +85,7 @@ def run_scenario(config, *, transport=None, run_id=None):
         stage('preprocessing')
         request_path = artifacts.write_json('requests/preprocessing.json', config.preprocessing_request())
         client.exchange(
-            'POST', f'{config.gis_cities_url}/components/mtl_fsa_gisoo/runs',
+            'POST', f'{config.gis_cities_url}/components/{config.component_name}/runs',
             destination=artifacts.path('responses/preprocessing.body'),
             metadata_path=artifacts.path('responses/preprocessing.http.json'),
             run_id=artifacts.run_id, timeout=config.timeout('preprocess'),

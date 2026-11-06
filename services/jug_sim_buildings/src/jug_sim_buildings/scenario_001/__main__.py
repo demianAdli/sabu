@@ -10,6 +10,7 @@ www.demianadli.com
 """
 
 import argparse
+from dataclasses import replace
 import json
 import sys
 
@@ -17,12 +18,15 @@ import sys
 def main(argv=None):
     parser = argparse.ArgumentParser(description='Run scenario_001 through GIS APIs, preparation and optional LCA submission.')
     parser.add_argument('--config', required=True, help='Path to a scenario JSON configuration file.')
+    parser.add_argument('--component', help='GIS Cities component; overrides component_name in the configuration.')
     parser.add_argument('--prepare-from-run', help='Prepare an existing successful run without HTTP calls.')
     args = parser.parse_args(argv)
     # --help performs no service imports, filesystem writes, or logging setup.
     from .config import ScenarioConfig
     try:
         config = ScenarioConfig.from_file(args.config)
+        if args.component is not None:
+            config = replace(config, component_name=args.component)
     except (OSError, ValueError, TypeError) as exc:
         parser.error(str(exc))
 
