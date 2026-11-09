@@ -45,7 +45,7 @@ input_paths = {
   'fsa':
   os.path.join(
     input_data_dir,
-    'synthetic_predominant_uses_dup.gpkg')
+    'synthetic_fsa.gpkg')
 }
 fsa_field_name = 'g_fsa'
 
