@@ -10,6 +10,7 @@ www.demianadli.com
 """
 
 from copy import deepcopy
+from dataclasses import replace
 import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -20,7 +21,7 @@ import requests
 
 from jug_sim_buildings.http_transport import HTTPTransport
 from jug_sim_buildings.scenario_001.config import ScenarioConfig
-from jug_sim_buildings.scenario_001.contracts import load_json
+from jug_sim_buildings.scenario_001.contracts import ContractError, load_json
 from jug_sim_buildings.scenario_001.run_artifacts import RunArtifacts, file_digest
 from jug_sim_buildings.scenario_001.traceability import json_lines
 from jug_sim_buildings.scenario_001.workflow import run_scenario, ScenarioRunError
@@ -33,6 +34,9 @@ class Backend(ControlledReprojector):
     def resolve_crs(self, declarations, config):
         return {**super().resolve_crs(declarations, config), 'target_crs': 'EPSG:4326'}
 
+    def close(self):
+        pass  # The controlled backend owns no external resources.
+
 
 class TestCompleteScenario(unittest.TestCase):
     def setUp(self):
@@ -43,7 +47,8 @@ class TestCompleteScenario(unittest.TestCase):
                                     fsa='H3B', preparation_enabled=True, lca_enabled=True, lca_url='http://lca')
         self.transport = HTTPTransport()
         self.addCleanup(self.transport.close)
-        preprocessing, collection, uniquification = workflow_fixture()
+        # Keep the duplicate tie and mapping, with areas eligible for LCA preparation.
+        preprocessing, collection, uniquification = workflow_fixture(areas=[30, '40', 40, 50, 60, 70])
         preprocessing = {key: value.replace('H2M', 'H3B') if isinstance(value, str) else value
                          for key, value in preprocessing.items()}
         for feature in collection['features'] + uniquification['retained_geojson']['features']:
@@ -78,7 +83,9 @@ class TestCompleteScenario(unittest.TestCase):
 
     def test_complete_http_flow_preserves_bytes_ids_and_all_original_histories(self):
         outcome = self.execute(self.responses())
+        self.assertEqual(outcome['status'], 'succeeded')
         self.assertEqual(len(self.calls), 4)
+        self.assertEqual(self.calls[-1]['url'], f'{self.config.lca_url}/emissions?include_exclusions=true')
         self.assertTrue(all(c['headers']['X-Request-ID'] == outcome['run_id'] for c in self.calls))
         self.assertEqual(self.calls[-1]['body'], Path(outcome['preparation']['lca_input_path']).read_bytes())
         self.assertEqual(outcome['lca']['summary']['total_reported_lca_scope'], 36.)
@@ -94,6 +101,65 @@ class TestCompleteScenario(unittest.TestCase):
             self.assertEqual(file_digest(self.directory / name), digest, name)
         report = load_json(self.directory / 'reports/evaluation.json')
         self.assertEqual(report['criteria']['traceability']['status'], 'passed')
+
+    def test_uniquification_contract_failure_prevents_lca_and_preserves_evidence(self):
+        cases = [
+            ('input_count', lambda r: r['uniquification'].update(input_features=99),
+             'Input count differs from downloaded input.'),
+            ('record_mapping', lambda r: r['records'][0].update(input_position=1),
+             'Invalid input-position mapping.'),
+        ]
+        for name, mutation, message in cases:
+            with self.subTest(case=name), TemporaryDirectory() as directory:
+                self.root = Path(directory)
+                self.config = replace(self.config, output_root=self.root)
+                self.calls = []
+                broken = deepcopy(self.payloads[2])
+                mutation(broken)
+                responses = self.responses()
+                responses[2] = json_response(broken, 200)
+                expected_body = json.dumps(broken, ensure_ascii=False).encode('utf-8')
+                with self.assertRaises(ScenarioRunError) as caught:
+                    self.execute(responses)
+
+                self.assertIsInstance(caught.exception.__cause__, ContractError)
+                self.assertEqual(caught.exception.stage, 'uniquification_contract')
+                self.assertEqual([(c['method'], c['url']) for c in self.calls], [
+                    ('POST', f'{self.config.gis_cities_url}/components/mtl_fsa_gisoo/runs'),
+                    ('GET', self.payloads[0]['standardized_download_url']),
+                    ('POST', f'{self.config.gis_validation_url}/uniquifications'),
+                ])
+                self.assertFalse(any(c['url'].startswith(self.config.lca_url) for c in self.calls))
+                self.assertEqual(json.loads(self.calls[2]['body']), {
+                    'buildings_set': self.payloads[1], 'unique_attribute_key': 'roll_provincial_id',
+                    'area_key': 'citygisoo_area'})
+                state = load_json(self.directory / 'run.json')
+                self.assertTrue(state['configuration']['preparation_enabled'])
+                self.assertTrue(state['configuration']['lca_enabled'])
+                self.assertEqual(state['status'], 'failed')
+                self.assertEqual(state['stage'], 'uniquification_contract')
+                self.assertEqual(state['error'], {
+                    'type': 'ContractError', 'message': message, 'stage': 'uniquification_contract'})
+                self.assertEqual(state['stage_outcomes'][-1]['stage'], 'uniquification_contract')
+                self.assertEqual(state['stage_outcomes'][-1]['status'], 'failed')
+                self.assertTrue(all(s['status'] == 'succeeded' for s in state['stage_outcomes'][:-1]))
+                self.assertNotIn('lca', state)
+                self.assertFalse((self.directory / 'preparation').exists())
+                self.assertFalse((self.directory / 'requests/lca.geojson').exists())
+                self.assertFalse((self.directory / 'retained.geojson').exists())
+                response = load_json(self.directory / 'responses/uniquification.http.json')
+                self.assertEqual(response['status'], 200)
+                self.assertTrue(response['complete'])
+                self.assertEqual((self.directory / 'responses/uniquification.body').read_bytes(), expected_body)
+                self.assertEqual(load_json(self.directory / 'input/standardized.geojson'), self.payloads[1])
+                self.assertEqual(len(json_lines(self.directory / 'source_records.jsonl')), 6)
+                for path in ('input/standardized.geojson', 'source_records.jsonl',
+                             'responses/uniquification.body', 'responses/uniquification.http.json'):
+                    self.assertEqual(state['artifacts'][path], file_digest(self.directory / path))
+                evaluation = load_json(self.directory / 'reports/evaluation.json')
+                self.assertEqual(evaluation['error'], state['error'])
+                self.assertEqual(evaluation['criteria']['failure_handling']['status'], 'failure_recorded')
+                self.assertEqual(list((self.directory / 'tmp').iterdir()), [])
 
     def test_failures_stop_dependent_requests_and_preserve_primary_error(self):
         for index in range(4):
@@ -111,7 +177,6 @@ class TestCompleteScenario(unittest.TestCase):
                 self.assertNotIn('lca', state)
                 self.assertTrue((self.directory / 'reports/evaluation.json').exists())
                 # Keep every run; the next iteration finds its own new root.
-                from dataclasses import replace
                 self.root = self.root / f'next-{index}'
                 self.config = replace(self.config, output_root=self.root)
 

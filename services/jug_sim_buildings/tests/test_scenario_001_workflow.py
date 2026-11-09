@@ -30,12 +30,12 @@ from jug_sim_buildings.scenario_001.workflow import ScenarioRunError, run_scenar
 from test_http_transport import ControlledResponse
 
 
-def workflow_fixture():
+def workflow_fixture(*, areas=None):
     """Synthetic polygons: a tied ID group, missing/blank IDs, and an invalid singleton area."""
     collection = {'type': 'FeatureCollection',
                   'crs': {'type': 'name', 'properties': {'name': 'EPSG:32188'}}, 'features': []}
     identifiers = ['0001', '0001', '0001', None, '  ', 123]
-    areas = [10, '20', 20, None, -4, 'not numeric']
+    areas = [10, '20', 20, None, -4, 'not numeric'] if areas is None else areas
     for position, (identifier, area) in enumerate(zip(identifiers, areas)):
         collection['features'].append({
             'type': 'Feature', 'id': 100000 + position,
@@ -334,23 +334,30 @@ class TestScenarioWorkflow(unittest.TestCase):
     def test_uniquification_contract_and_reconciliation_failures_preserve_raw_result(self):
         preprocessing, collection, result = workflow_fixture()
         mutations = [
-            lambda r: r.pop('records'),
-            lambda r: r['uniquification'].update(input_features=99),
-            lambda r: r['uniquification'].update(removed_features=99),
-            lambda r: r['uniquification'].update(duplicate_groups=2),
-            lambda r: r['uniquification'].update(ranking_area_key='roll_area'),
-            lambda r: r['retained_geojson']['features'].pop(),
-            lambda r: r['records'][0].update(input_position=1),
-            lambda r: r['records'][0].update(retained_record_ref='record:0'),
-            lambda r: r['records'][0].update(retained_feature_index=9),
-            lambda r: r['records'][1].update(retained_record_ref='record:2'),
-            lambda r: r['records'][0].update(identifier='different'),
-            lambda r: r['records'][0].update(area=999),
-            lambda r: r['records'][2].update(status='retained', retained_record_ref='record:2'),
-            lambda r: r['retained_geojson']['features'][0]['properties'].update(citygisoo_id='changed'),
+            (lambda r: r.pop('records'), 'Record mapping count mismatch.'),
+            (lambda r: r['uniquification'].update(input_features=99),
+             'Input count differs from downloaded input.'),
+            (lambda r: r['uniquification'].update(removed_features=99),
+             'Input = retained + removed reconciliation failed.'),
+            (lambda r: r['uniquification'].update(duplicate_groups=2), 'Duplicate group count mismatch.'),
+            (lambda r: r['uniquification'].update(ranking_area_key='roll_area'),
+             'Unexpected uniquification settings.'),
+            (lambda r: r['retained_geojson']['features'].pop(), 'Retained GeoJSON count mismatch.'),
+            (lambda r: r['records'][0].update(input_position=1), 'Invalid input-position mapping.'),
+            (lambda r: r['records'][0].update(retained_record_ref='record:0'),
+             'Record points to a missing or removed winner.'),
+            (lambda r: r['records'][0].update(retained_feature_index=9), 'Invalid retained feature index.'),
+            (lambda r: r['records'][1].update(retained_record_ref='record:2'),
+             'Retained record must map to itself.'),
+            (lambda r: r['records'][0].update(identifier='different'), 'Record source values mismatch.'),
+            (lambda r: r['records'][0].update(area=999), 'Record source values mismatch.'),
+            (lambda r: r['records'][2].update(status='retained', retained_record_ref='record:2'),
+             'Retained features must preserve input order.'),
+            (lambda r: r['retained_geojson']['features'][0]['properties'].update(citygisoo_id='changed'),
+             'Retained properties differ from their source record.'),
         ]
-        for mutation in mutations:
-            with self.subTest(mutation=mutation), TemporaryDirectory() as directory:
+        for mutation, message in mutations:
+            with self.subTest(message=message), TemporaryDirectory() as directory:
                 broken = deepcopy(result)
                 mutation(broken)
                 self.calls = []
@@ -360,6 +367,13 @@ class TestScenarioWorkflow(unittest.TestCase):
                                   json_response(broken)], config=config)
                 self.assertEqual(len(self.calls), 3)
                 run = caught.exception.directory
+                self.assertIsInstance(caught.exception.__cause__, ContractError)
+                self.assertEqual(caught.exception.stage, 'uniquification_contract')
+                state = load_json(run / 'run.json')
+                self.assertEqual(state['status'], 'failed')
+                self.assertEqual(state['error'], {
+                    'type': 'ContractError', 'message': message, 'stage': 'uniquification_contract'})
+                self.assertEqual(state['stage_outcomes'][-1]['status'], 'failed')
                 self.assertEqual(load_json(run / 'responses/uniquification.body'), broken)
                 self.assertFalse((run / 'retained.geojson').exists())
                 self.assertTrue((run / 'source_records.jsonl').exists())
