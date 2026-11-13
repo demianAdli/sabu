@@ -36,11 +36,6 @@ input_paths = {
     input_data_dir,
     'auto_buildings',
     'auto_height_gatineau.gpkg'),
-  'gatineau_nrcan_preserved':
-  os.path.join(
-    input_data_dir,
-    'auto_buildings_preserved',
-    'auto_height_gatineau_preserved.gpkg'),
   'gatineau_mahm_usage_2026_gpkg':
   os.path.join(
     input_data_dir,

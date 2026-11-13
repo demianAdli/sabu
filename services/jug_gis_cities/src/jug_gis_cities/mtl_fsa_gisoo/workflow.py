@@ -105,10 +105,6 @@ def run_workflow(fsa):
         paths.qgis_path,
         paths.input_paths['mtl_nrcan_heights'],
         'nrcan_mtl')
-      nrcan_preserved_mtl = ScrubLayer(
-        paths.qgis_path,
-        paths.input_paths['mtl_nrcan_preserved'],
-        'nrcan_preserved_mtl')
       usage_mtl = ScrubLayer(
         paths.qgis_path,
         paths.input_paths['mtl_mahm_usage_2026_gpkg'],
@@ -119,7 +115,6 @@ def run_workflow(fsa):
         'fsa_boundaries')
       _log_layer_summary(roll_mtl)
       _log_layer_summary(nrcan_mtl)
-      _log_layer_summary(nrcan_preserved_mtl)
       _log_layer_summary(usage_mtl)
       _log_layer_summary(fsa_layer)
 
@@ -148,9 +143,7 @@ def run_workflow(fsa):
         normalized_fsa,
         layer_name=f'nrcan_clipped_{normalized_fsa}')
 
-      nrcan_preserved_mtl.clip_layer(
-        fsa_boundary.layer_path,
-        output_paths['nrcan_preserved'])
+      nrcan.duplicate_layer(output_paths['nrcan_preserved'])
       nrcan_preserved = _load_output_layer(
         output_paths,
         'nrcan_preserved',
@@ -184,15 +177,12 @@ def run_workflow(fsa):
     with _workflow_step('assign nrcan area field', normalized_fsa):
       processor.add_area_field(nrcan_fixed, 'nrcan_area')
 
-    with _workflow_step('fix nrcan preserved geometries', normalized_fsa):
-      nrcan_preserved.fix_geometries(output_paths['nrcan_preserved_fixed'])
+    with _workflow_step('duplicate fixed nrcan for preservation', normalized_fsa):
+      nrcan_fixed.duplicate_layer(output_paths['nrcan_preserved_fixed'])
       nrcan_preserved_fixed = _load_output_layer(
         output_paths,
         'nrcan_preserved_fixed',
         normalized_fsa)
-
-    with _workflow_step('assign nrcan preserved area field', normalized_fsa):
-      processor.add_area_field(nrcan_preserved_fixed, 'nrcan_area')
 
     with _workflow_step('fix usage geometries', normalized_fsa):
       usage.fix_geometries(output_paths['usage_fixed'])

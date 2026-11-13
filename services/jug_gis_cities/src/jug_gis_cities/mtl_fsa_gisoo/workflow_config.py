@@ -36,11 +36,6 @@ input_paths = {
     input_data_dir,
     'mtl_auto_with_heights',
     'mtl_auto_with_heights.gpkg'),
-  'mtl_nrcan_preserved':
-  os.path.join(
-    input_data_dir,
-    'mtl_auto_with_heights_preserved',
-    'mtl_auto_with_heights_preserved.gpkg'),
   'mtl_mahm_usage_2026_gpkg':
   os.path.join(
     input_data_dir,
