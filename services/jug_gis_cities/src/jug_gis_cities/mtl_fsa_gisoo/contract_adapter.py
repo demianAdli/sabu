@@ -118,7 +118,8 @@ def run_contract_adapter(fsa, non_null_required_fields=None):
         id_start_value=id_start_value,
         output_layer_name=resolved_output_layer_name,
         field_order=field_order,
-        output_geopackage_path=output_geopackage_path)
+        output_geopackage_path=output_geopackage_path,
+        field_fallback=('function', 'usage_function'))
 
     try:
         standardized_output_path = adapter.run()

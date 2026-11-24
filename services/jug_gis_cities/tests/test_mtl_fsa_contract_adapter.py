@@ -77,6 +77,7 @@ class TestMtlFsaContractAdapter(unittest.TestCase):
         self.assertEqual(
             kwargs['field_order'],
             list(contract_adapter.rename_fields.values()))
+        self.assertEqual(kwargs['field_fallback'], ('function', 'usage_function'))
         self.assertIsNone(kwargs['non_null_required_fields'])
         self.assertEqual(
             kwargs['field_order'][:5],
